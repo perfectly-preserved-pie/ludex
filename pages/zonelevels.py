@@ -1,4 +1,4 @@
-from dash import html
+from dash import dcc, html
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 
@@ -272,7 +272,7 @@ layout = html.Div(
             color="info",
             className="mt-2"
         ),
-        #dcc.Markdown("Here is a list of all the zones in the game, along with their recommended levels:"),
+        dcc.Markdown("Here is a list of all the zones in the game, along with their recommended levels:"),
         grid
     ]
 )
