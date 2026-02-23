@@ -272,7 +272,7 @@ layout = html.Div(
             color="info",
             className="mt-2"
         ),
-        dcc.Markdown("Here is a list of all the zones in the game, along with their recommended levels:"),
+        dcc.Markdown("Here is a list of all the zones in the game, along with their recommended levels. You can use the filters to find zones that are appropriate for your current level or search for a specific name."),
         grid
     ]
 )
