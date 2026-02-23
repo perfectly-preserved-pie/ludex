@@ -132,7 +132,7 @@ wheels = [
 [[package]]
 name = "expedition33"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "dash" },
     { name = "dash-bootstrap-components" },
