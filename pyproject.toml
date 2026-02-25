@@ -13,4 +13,5 @@ dependencies = [
     "dash==4.0.0",
     "gunicorn==25.1.0",
     "pandas==3.0.1",
+    "loguru>=0.7.3",
 ]
