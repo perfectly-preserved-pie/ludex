@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import sqlite3
 
@@ -45,12 +46,57 @@ def load_episode_rows(connection: sqlite3.Connection, table_name: str) -> pd.Dat
 
 
 def build_column_defs(frame: pd.DataFrame) -> list[dict]:
+    # Determine if a column is numeric using dtype first, then sampled values
+    def is_numeric_col(column_name: str) -> bool:
+        if is_numeric_dtype(frame[column_name].dtype):
+            return True
+
+        non_na_values = frame[column_name].dropna()
+        if non_na_values.empty:
+            return False
+
+        sample_values = non_na_values.sample(min(100, len(non_na_values)), random_state=0).tolist()
+        try:
+            for value in sample_values:
+                first_part = str(value).split("-")[0].strip()
+                float(first_part)
+            return True
+        except (TypeError, ValueError):
+            return False
+
+    # Extracts the starting number from a cell's content, especially if the content represents a range like "100-200"
+    # This is used to sort the numeric columns properly
+    def get_value_getter(column_name: str, numeric: bool) -> dict | None:
+        if not numeric:
+            return None
+
+        accessor = json.dumps(column_name)
+        return {
+            "function": (
+                "return "
+                f"(params.data && params.data[{accessor}] != null && params.data[{accessor}] !== '' "
+                f"&& !Number.isNaN(Number(String(params.data[{accessor}]).split('-')[0].trim()))) "
+                f"? Number(String(params.data[{accessor}]).split('-')[0].trim()) : null;"
+            )
+        }
+
     column_defs: list[dict] = []
     for field in frame.columns:
+        is_numeric = is_numeric_col(field)
         col_def = {
             "field": field,
-            "filter": "agNumberColumnFilter" if is_numeric_dtype(frame[field]) else "agTextColumnFilter",
+            "filter": "agNumberColumnFilter" if is_numeric else "agTextColumnFilter",
         }
+        value_getter = get_value_getter(field, is_numeric)
+        if value_getter:
+            col_def["valueGetter"] = value_getter
+        if is_numeric:
+            col_def["valueFormatter"] = {
+                "function": (
+                    "params.value == null ? '' : "
+                    "new Intl.NumberFormat('en-US', {maximumFractionDigits: 20}).format(Number(params.value))"
+                )
+            }
         if field == "Name":
             col_def["pinned"] = "left"
         column_defs.append(col_def)
