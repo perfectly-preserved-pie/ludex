@@ -58,49 +58,58 @@ app = dash.Dash(
 
 dmc.pre_render_color_scheme()
 
-home_layout = dbc.Container(
-    [
-        dcc.Location(id="url"),
-        dbc.Row(
-            dbc.Col(
-                dmc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H1("Ludex", className="mb-2"),
-                            html.P(
-                                html.Em('Latin "ludus" (game) + dex (index)'),
-                                className="mb-0",
-                            ),
-                        ]
+def home_layout() -> dbc.Container:
+    """
+    Build the Home page layout.
+
+    Returns a fresh component tree on each render so `games-tree` starts with
+    `selected=[]`, which allows selecting the same leaf again after navigating back.
+    """
+    return dbc.Container(
+        [
+            dcc.Location(id="url"),
+            dbc.Row(
+                dbc.Col(
+                    dmc.Card(
+                        dbc.CardBody(
+                            [
+                                html.H1("Ludex", className="mb-2"),
+                                html.P(
+                                    html.Em('Latin "ludus" (game) + dex (index)'),
+                                    className="mb-0",
+                                ),
+                            ]
+                        ),
+                        id="title-card",
                     ),
-                    id="title-card",
+                    width=12,
                 ),
-                width=12,
+                className="mt-4 mb-3",
             ),
-            className="mt-4 mb-3",
-        ),
-        dbc.Row(
-            dbc.Col(
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.P("Select a game to explore:", className="mb-0"),
-                            dmc.Tree(
-                                id="games-tree",
-                                data=build_games_tree(),
-                                selectOnClick=True,
-                                clearSelectionOnOutsideClick=True,
-                                expanded="*",  # expand all by default
-                            )
-                        ]
-                    )
-                ),
-                width=12,
-            )
-        ),
-    ],
-    fluid=True,
-)
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.P("Select a game to explore:", className="mb-0"),
+                                dmc.Tree(
+                                    id="games-tree",
+                                    data=build_games_tree(),
+                                    selectOnClick=True,
+                                    clearSelectionOnOutsideClick=True,
+                                    selected=[],
+                                    expanded="*",  # expand all by default
+                                ),
+                            ]
+                        )
+                    ),
+                    width=12,
+                )
+            ),
+        ],
+        fluid=True,
+    )
+
 
 register_page(__name__, path="/", name="Home", layout=home_layout)
 
