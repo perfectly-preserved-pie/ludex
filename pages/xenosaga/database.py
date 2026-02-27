@@ -1,16 +1,13 @@
 from __future__ import annotations
-
-import json
-from pathlib import Path
-import sqlite3
-
 from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
 from dash.exceptions import PreventUpdate
+from pandas.api.types import is_numeric_dtype
+from pathlib import Path
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
+import json
 import pandas as pd
-from pandas.api.types import is_numeric_dtype
-
+import sqlite3
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "assets" / "xenosaga"
 DB_PATH = DATA_DIR / "xenosaga.db"
