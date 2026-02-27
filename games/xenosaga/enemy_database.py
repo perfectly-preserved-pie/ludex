@@ -3,7 +3,7 @@ from assets.xenosaga.load_sqlite_database import load_sqlite_database
 from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
 from dash_iconify import DashIconify
 from dash.exceptions import PreventUpdate
-from pages.xenosaga.helpers import apply_element_style, build_column_defs, format_value, load_episode_rows
+from games.xenosaga.helpers import apply_element_style, build_column_defs, format_value, load_episode_rows
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import pandas as pd

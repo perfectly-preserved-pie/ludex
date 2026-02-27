@@ -51,6 +51,7 @@ app = dash.Dash(
     __name__,
     description="An index of resources for various games.",
     external_stylesheets=[dbc.themes.BOOTSTRAP],
+    pages_folder="games",
     suppress_callback_exceptions=True,  # tree lives in page layout, not top-level
     title="Ludex",
     use_pages=True,
