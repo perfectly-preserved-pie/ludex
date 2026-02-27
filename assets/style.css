@@ -1,4 +1,26 @@
-/* filepath: assets/style.css */
+/* Keep Bootstrap component tokens in sync with Mantine color scheme. */
+html[data-mantine-color-scheme] {
+    --bs-body-bg: var(--mantine-color-body);
+    --bs-body-color: var(--mantine-color-text);
+    --bs-emphasis-color: var(--mantine-color-text);
+    --bs-secondary-color: var(--mantine-color-dimmed);
+    --bs-secondary-bg: var(--mantine-color-gray-1);
+    --bs-tertiary-bg: var(--mantine-color-gray-0);
+    --bs-border-color: var(--mantine-color-default-border);
+    --bs-card-bg: var(--mantine-color-body);
+    --bs-card-color: var(--mantine-color-text);
+    --bs-primary: var(--mantine-color-blue-filled);
+    --bs-primary-rgb: var(--mantine-color-blue-filled-rgb);
+    --bs-link-color: var(--mantine-color-anchor);
+    --bs-link-hover-color: var(--mantine-color-blue-filled-hover);
+}
+
+html[data-mantine-color-scheme="dark"] {
+    --bs-secondary-bg: var(--mantine-color-dark-6);
+    --bs-tertiary-bg: var(--mantine-color-dark-5);
+}
+
 body {
-    background-color: #f8f9fa;
+    background-color: var(--mantine-color-body);
+    color: var(--mantine-color-text);
 }

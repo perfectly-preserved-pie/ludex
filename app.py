@@ -50,16 +50,18 @@ def build_games_tree() -> list[dict[str, Any]]:
 app = dash.Dash(
     __name__,
     use_pages=True,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    external_stylesheets=[dbc.themes.BOOTSTRAP, *dmc.styles.ALL],
     suppress_callback_exceptions=True,  # tree lives in page layout, not top-level
 )
+
+dmc.pre_render_color_scheme()
 
 home_layout = dbc.Container(
     [
         dcc.Location(id="url"),
         dbc.Row(
             dbc.Col(
-                dbc.Card(
+                dmc.Card(
                     dbc.CardBody(
                         [
                             html.H1("Ludex", className="mb-2"),
