@@ -1,0 +1,15 @@
+Skill,Damage Multi,Notes,Break Multi,Charges,AOE,Cost,BaseDmg/AP,Game Description,,
+Overcharge 0 Charges,2.10," + 20% per charge, additional x1.25 at 10 charges",1,-10,,4,0.53,high,,
+Overcharge 10 Charges,7.88,,1,-10,FALSE,4,1.97,high,,
+Lumiere Assault,1.80,"5 Hits, +1 Charges on Crits",0.3,5-10,FALSE,3,0.60,low,,
+Marking Shot,1.20,Applies Mark,1,1,,2,0.60,low,,
+From Fire,2.00,Heals 20% vs burning.,0.5,3,FALSE,4,0.50,medium,,
+Strike Storm,5.88,6 Hits; +2 Charges on Crits,0.3,6-10,FALSE,7,0.84,Very High,,
+Shatter,2.45,1 AOE Hit. Can Break. Adds 10 Charges on Break,1,1-10,TRUE,5,0.49,High,,
+Ranged Attack,0.15,,,,FALSE,,,,,
+Basic Attack,1.00,,,,FALSE,,,,,
+,,,,,,,,,,Skill Tierlist
+,,,,,,,,,,
+,,,,,,,,,,Break Damage Guide
+,,,,,,,,,,
+,,,,,,,,,,All Characters

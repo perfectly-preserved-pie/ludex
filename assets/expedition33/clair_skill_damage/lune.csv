@@ -1,0 +1,27 @@
+Skill,Damage Multi,Condition 1,Dmg Con1,Con Max Dmg,Dmg Max,Notes,AOE,BreakMulti,Cost,BaseDmg/AP,MaxDmg/AP,Game Description,Test Basic Attack Dmg,Test AP,Test 1,T2,T3,,
+SkyBreak Gradient Attack 3,56.00,Grad 3,56.00,,56.00,,TRUE,0.1,Gradient 3,,,extreme,1388,1262,77728,77728,77728,,
+Lightning Dance,4.32,Stains 3,21.60,3 Stains all crits,43.20,Double hits on Crit,FALSE,0.2,7,0.62,6.17,very high,1388,1262,5994,,,,
+Hell,12.00,Stains 3,36.00,Stain+3 Burn Ticks,42.66,Burn 10,TRUE,0.7,9,1.33,4.74,very high,1388,1262,16565,49968,59217,,
+Elemental Genesis,33.60,Stains 4,33.60,,33.60,,TRUE,0.1,4,8.40,8.40,extreme,1388,1262,46640,46640,46640,,
+Typhoon,1.68,Turn Start Dmg,3.50,Stain over 5 Turns,19.18,"Team Regen, 12.2 no stain Total dmg",TRUE,1,8,0.21,2.40,high,1388,1262,2332,4858,26622,,
+Crystal Crush,6.30,Stains 2,18.90,,18.90,,FALSE,2,7,0.90,2.70,high,1388,1262,8745,26235,26235,,
+Crippling Tsunami,3.00,Stains 3,15.00,,15.00,Slows 3 turns,TRUE,1,5,0.60,3.00,medium,1388,1262,4164,20820,20820,,
+Rockslide,2.75,Stains 3,13.75,,13.75,Can Break.,FALSE,0.7,5,0.55,2.75,medium,1388,1262,3817,19085,19085,,
+Mayhem,0.97,2 Stains,1.89,4 Stains,12.96,Consumes all stains.,FALSE,0.4,3,0.32,4.32,high,1388,1262,1341,2623,13117,,
+Terraquake,0.96,Turn Start Dmg,1.80,Total 5 Turns,9.96,"50% increased break debuff, 3-5 Turns, 6.36 No stain total",TRUE,1,5,0.19,1.99,low,1388,1262,1332,2498,"13,822",,
+Fire Rage Stained,2.40,Stains 2 t2 ,6.00,Stained t3,9.00,Rapidly increases in damage but the growth diminishes %wise. Complicated Formula.,TRUE,1,5,0.48,1.80,high,1388,1262,3331,8328,12492,,
+Thunderfall,2.16,Stains 1,3.24,Crit every hit+stain,6.48,,FALSE,0.2,5,0.43,1.30,medium,1388,1262,3000,4500,9000,,
+Tremor Gradient Attack 1,6.00,Grad 1,6.00,,6.00,Removes enemy shields,TRUE,1,Gradient 1,,,high,1388,1262,8328,8328,8328,,Video Guide
+Storm Caller,0.84,Secondary,0.28,2 Stains 3 Turns +hits?,5.04,Secondary Dmg affects allies,TRUE,0.2,6,0.14,0.84,medium,1388,1262,1166,389,6996,,
+Burn 10,1.50,3 Turns,4.50,,4.50,,FALSE,,,,,,1388,1262,2083,6249,6249,,Lune Skill Tierlist
+Fire Rage,1.20,t2,2.50,t3,4.46,Rapidly increases in damage but the growth diminishes %wise. Complicated Formula. ,TRUE,1,5,0.24,0.89,high,1388,1262,1666,3470,6185,,
+Wildfire,1.50,Stains 2,3.00,Stain+burn 3,4.38,Burn 3,TRUE,1,4,0.38,1.09,medium,1388,1262,2082,4164,6078,,Gradient Attack Tierlist
+Immolation,0.98,Stains 1,1.47,Stain+3T Burn,2.85,"Burn 3, Burn 5 vs marked",TRUE,1,3,0.33,0.95,low,1388,1262,1360,2040,3954,,
+Earth Rising,1.68,Stains 1,2.80,,2.80,,TRUE,1,3,0.56,0.93,low,1388,1262,2332,3887,3887,,All Characters
+Electrify,0.66,Stain 1,1.32,Crit,2.64,Double on crit.,FALSE,0.5,1,0.66,2.64,low,1388,1262,914,1833,3666,,
+Ice Lance,1.68,Stains 1,2.52,,2.52,Slows 3 turns,FALSE,1,4,0.42,0.63,medium,1388,1262,2332,3498,3498,,Break Damage Guide
+Elemental Trick,1.68,,1.68,,1.68,Stains on crit. 1hit of each element.,FALSE,0.4,3,0.56,0.56,low,1388,1262,2332,2332,2332,,
+burn 3,0.46,3 Turns,1.38,,1.38,,FALSE,,,,,,1388,1262,638,1914,1914,,
+Thermal Transfer,1.20,,1.20,,1.20,Play again with stains. +0-2 AP vs burning.,FALSE,0.7,2,0.60,0.60,low,1388,1262,1666,1666,1666,,
+burn 1,0.15,3 Turns,0.45,,0.45,,FALSE,,,,,,1388,1262,,,,,
+Ranged Attack,0.15,,0.00,,0.00,,FALSE,,,,,,1388,1262,208,,,,

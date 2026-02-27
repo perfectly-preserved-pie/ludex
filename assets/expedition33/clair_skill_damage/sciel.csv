@@ -1,0 +1,28 @@
+Skill,Damage Multi,Condition,ConDmg,ConTwilight,TwilightDmg,Notes,Foretell,Lunar,AOE,Break Multi,Cost,BaseDmg/AP,MaxDmg/AP,Game Description,Base Attack,Test AP,Test 1,T2,T3,,
+End Slice 30 Foretell,12.00,30 Foretell,84.00,"50% Twilight, 30 Foretell",126.00,20% increased damage per total Fortell consumed this fight.,,Moon,FALSE,1,Gradient 3,,,extreme,1485,1485,17820,124740,187110,,
+Our Sacrifice,2.80,10 Foretell Full life,44.46,"Full life, 20 Foretell, 50% TL",116.72,30% more damage per Foretell. Consumes all (but 1%) allies health for damage 1.5% more damage per % (+297%% at full life) ,Consume all,Moon,,1,4,0.70,29.18,extreme,1485,1485,4158,66029,173326,,
+Twilight Dance,7.80,10 Foretell,27.30,"50% Twilight, 20 Foretell",70.19,Extends Twilight by 1T. 25% more damage per Foretell.,Consume all,Moon,,0.4,9,0.87,7.80,extreme,1485,1485,11582,40537,104238,,
+End Slice,12.00,10 Foretell,36.00,"50% Twilight, 10 Foretell",54.00,20% increased damage per total Fortell consumed this fight.,,Moon,FALSE,1,Gradient 3,,,extreme,1485,1485,17820,53460,80190,,
+Phantom Blade,3.60,10 Foretell,16.20,"50% Twilight, 20 Foretell",43.20,Can Break. 35% more dmg per Foretell,Consume all,Moon,,1,5,0.72,8.64,high,1485,1485,5346,24057,64152,,
+Dark Wave,4.20,10 Foretell,14.70,"50% Twilight, 20 Foretell",37.80,25% more damage per Foretell,Consume all,Moon,TRUE,0.5,6,0.70,6.30,high,1485,1485,6237,21830,56133,,
+Delaying Slash,3.30,10 Foretell,13.20,"50% Twilight, 20 Foretell",34.65,30% more dmg per Foretell. Consume Fortell for damage and delay target's turn.,Consume all,Moon,FALSE,0.7,5,0.66,6.93,medium,1485,1485,4901,19602,51461,,
+Final Path,10.50,,10.50,50% Twilight,15.75,Can Break.,10,Sun,,1,9,1.17,1.75,extreme,1485,1485,15593,15593,23390,,
+Sealed Fate,3.28,1-6 Foretell,9.84,50% Twilight 1-6 Foretell,14.76,Each hits consumes Foretell for 3x Dmg. Crits leave Foretell,Consume 0-6,Moon,,0.1,4,0.82,3.69,medium,1485,1485,4872,14616,21924,,
+Doom,9.75,,9.75,50% Twilight,14.63,"Can Break. Applies Powerless, Defenceless, Slow for 3 turns.",,Moon,FALSE,0.5,Gradient 2,,,very high,1485,1485,14479,14479,21719,,
+Twilight Slash,1.40,10 Foretell,4.90,"50% Twilight, 20 Foretell",12.60,25% more damage per Foretell.,Consume all,Moon,,1,2,0.70,6.30,low,1485,1485,2079,7277,18711,,
+Shadow Bringer,6.00,,6.00,50% Twilight,9.00,"Random targets, 10 hits.",10,Sun,,0.1,Gradient 1,,,high,1485,1485,8910,8910,13365,,
+Firing Shadow,2.10,3 Foretell,4.20,50% Twilight 3 Foretell,6.30,Consumes up to 3 Foretell for double damage.,-3,Moon,TRUE,0.5,3,0.70,2.10,low,1485,1485,3120,6240,9360,,
+Grim Harvest,3.60,,3.60,50% Twilight,5.40,Heals allies 30% + 5%/Foretell,Consume all,Moon,FALSE,1,5,0.72,1.08,medium,1485,1485,5346,5346,8019,,
+Spectral Sweep,3.60,,3.60,50% Twilight,5.40,Double Foretell on crit.,6-12,Sun,TRUE,0.2,7,0.51,0.77,medium,1485,1485,5346,5346,8019,,
+Searing Bond,3.00,,3.00,50% Twilight,4.50,Hits all burning targets,5,Sun,TRUE,1,4,,1.13,medium,1485,1485,4455,4455,6683,,
+Harvest,2.80,,2.80,50% Twilight,4.20,Heals self for 40% +5%/Foretell,Consume all,Moon,FALSE,1,3,0.93,1.40,medium,1485,1485,4158,4158,6237,,
+Marking Card,2.80,,2.80,50% Twilight,4.20,Applies Mark. ,3,Sun,TRUE,0.7,3,0.93,1.40,medium,1485,1485,4158,4158,6237,,
+Bad Omen,2.40,,2.40,50% Twilight,3.60,,4,Sun,TRUE,0.7,3,,1.20,low,1485,1485,3564,3564,5346,,Video Guide
+Card Weaver,2.40,,2.40,50% Twilight,3.60,Spreads Fortell. Play again.,,Sun,FALSE,1,3,0.80,1.20,low,1485,1485,3564,3564,5346,,
+Plentiful Harvest,2.40,,2.40,50% Twilight,3.60,Grants AP to allies equal to Foretell,Consume all,Moon,FALSE,0.7,4,0.60,0.90,medium,1485,1485,3564,3564,5346,,Sciel Skill Tierlist
+Focused Foretell,1.20,,1.20,50% Twilight,1.80,2 Foretell. 5 vs targets without Foretell.,2-5,Sun,,1,2,0.60,0.90,medium,1485,1485,1782,1782,2673,,
+Basic Attack,1.00,,,,,,,,FALSE,,,,,,1485,1485,1485,,,,Gradient Attack Tierlist
+Ranged Attack,0.15,,,,,,,,FALSE,,,,,,1485,1485,223,,,,
+,,,,,,,,,,,,,,,,,,,,,All Characters
+,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,Break Damage Guide
