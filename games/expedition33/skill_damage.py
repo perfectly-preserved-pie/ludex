@@ -1,9 +1,11 @@
 from __future__ import annotations
-from dash import Input, Output, callback, dcc, html, register_page
+from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
+from dash.exceptions import PreventUpdate
 from games.expedition33.helpers import build_tab_payloads
 from pathlib import Path
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
+import math
 
 TAB_CONFIG = [
     {"tab_id": "maelle", "label": "Maelle"},
@@ -46,6 +48,33 @@ grid = dag.AgGrid(
     },
 )
 
+modal = dbc.Modal(
+    [
+        dbc.ModalHeader(id="exp33-skill-damage-modal-header"),
+        dbc.ModalBody(id="exp33-skill-damage-modal-content"),
+        dbc.ModalFooter(
+            dbc.Button("Close", id="exp33-skill-damage-close", className="ms-auto", n_clicks=0)
+        ),
+    ],
+    id="exp33-skill-damage-modal",
+    is_open=False,
+    scrollable=True,
+)
+
+
+def format_modal_value(value) -> str:
+    if value is None:
+        return "-"
+    if isinstance(value, bool):
+        return "Yes" if value else "No"
+    if isinstance(value, (int, float)):
+        if isinstance(value, float) and math.isnan(value):
+            return "-"
+        return f"{value:g}"
+    text = str(value).strip()
+    return text if text else "-"
+
+
 layout = html.Div(
     [
         html.H1("Skill Damage"),
@@ -64,6 +93,7 @@ layout = html.Div(
             color="info",
             className="mt-2",
         ),
+        dcc.Markdown("Click anywhere on a row to open a popup with all skill details."),
         dbc.Tabs(
             id="exp33-skill-damage-tabs",
             active_tab=default_tab,
@@ -71,6 +101,7 @@ layout = html.Div(
             className="mb-3",
         ),
         grid,
+        modal,
     ]
 )
 
@@ -83,6 +114,50 @@ layout = html.Div(
 def update_grid_for_tab(active_tab: str) -> tuple[list[dict], list[dict]]:
     payload = tab_payloads.get(active_tab) or tab_payloads[default_tab]
     return payload["rowData"], payload["columnDefs"]
+
+
+@callback(
+    Output("exp33-skill-damage-modal", "is_open"),
+    Output("exp33-skill-damage-modal-header", "children"),
+    Output("exp33-skill-damage-modal-content", "children"),
+    Input("exp33-skill-damage-grid", "cellClicked"),
+    Input("exp33-skill-damage-close", "n_clicks"),
+    State("exp33-skill-damage-modal", "is_open"),
+    State("exp33-skill-damage-grid", "rowData"),
+    prevent_initial_call=True,
+)
+def open_and_populate_modal(cell_clicked_data, _close_btn_clicks, _modal_open, grid_data):
+    ctx = callback_context
+    if not ctx.triggered:
+        raise PreventUpdate
+
+    trigger_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if trigger_id == "exp33-skill-damage-close":
+        return False, no_update, no_update
+
+    if trigger_id != "exp33-skill-damage-grid" or not cell_clicked_data:
+        raise PreventUpdate
+
+    selected_row = cell_clicked_data.get("data")
+    row_index = cell_clicked_data.get("rowIndex")
+    if selected_row is None and isinstance(row_index, int) and grid_data and 0 <= row_index < len(grid_data):
+        selected_row = grid_data[row_index]
+
+    if not selected_row:
+        raise PreventUpdate
+
+    skill_name = format_modal_value(selected_row.get("Skill")) or "Skill Details"
+    details = {k: v for k, v in selected_row.items() if k != "Skill"}
+
+    content = [
+        html.Div(
+            [html.B(f"{key}: "), html.Span(format_modal_value(value))],
+            style={"margin-bottom": "10px"},
+        )
+        for key, value in details.items()
+    ]
+
+    return True, html.H4(skill_name), html.Div(content, className="modal-content-wrapper")
 
 
 register_page(__name__, path="/skilldamage", name="Skill Damage", layout=layout)
