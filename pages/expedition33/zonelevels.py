@@ -245,6 +245,8 @@ zones = [
     }
 ]
 
+# Dark theme for ag-grid
+# https://www.dash-mantine-components.com/dash-ag-grid#dash-ag-grid-%E2%89%A5-v33
 ag_grid_theme = {
     "function": (
         "themeQuartz.withParams({"
