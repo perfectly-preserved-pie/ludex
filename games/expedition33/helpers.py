@@ -30,7 +30,7 @@ def clean_frame(frame: pd.DataFrame) -> pd.DataFrame:
     extra_cols = [
         c
         for c in frame.columns
-        if str(c).startswith("Extra") or str(c).startswith("Test") or str(c) == "Base Attack" or str(c) == "T2"
+        if str(c).startswith("Extra") or str(c).startswith("Test") or str(c) == "Base Attack" or str(c) == "T2" or str(c) == "T3"
     ]
     if extra_cols:
         frame = frame.drop(columns=extra_cols)
