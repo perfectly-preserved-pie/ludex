@@ -33,14 +33,32 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
     column_defs: list[dict[str, Any]] = []
     for column in frame.columns:
         numeric_col = is_numeric_dtype(frame[column])
-        column_defs.append(
-            {
-                "field": column,
-                "headerName": column,
-                "filter": "agNumberColumnFilter" if numeric_col else "agTextColumnFilter",
-            }
-        )
+        col_def = {
+            "field": column,
+            "headerName": column,
+            "filter": "agNumberColumnFilter" if numeric_col else "agTextColumnFilter",
+        }
+        if numeric_col:
+            # Display commas without changing the underlying numeric value used for sorting/filtering.
+            col_def["valueFormatter"] = {"function": "formatNumberWithCommas(params)"}
+        column_defs.append(col_def)
     return column_defs
+
+
+def format_value(value: Any) -> str:
+    if value is None:
+        return "-"
+    if isinstance(value, str) and value == "":
+        return "-"
+    if not isinstance(value, str) and pd.isna(value):
+        return "-"
+    try:
+        numeric_value = float(value)
+        if numeric_value.is_integer():
+            return f"{int(numeric_value):,}"
+        return f"{numeric_value:,}"
+    except (ValueError, TypeError):
+        return str(value)
 
 
 def build_tab_payloads(tab_config: list[dict[str, str]], csv_dir: Path) -> dict[str, dict[str, Any]]:

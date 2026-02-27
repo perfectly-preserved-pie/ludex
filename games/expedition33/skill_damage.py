@@ -1,11 +1,10 @@
 from __future__ import annotations
 from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
 from dash.exceptions import PreventUpdate
-from games.expedition33.helpers import build_tab_payloads
+from games.expedition33.helpers import build_tab_payloads, format_value
 from pathlib import Path
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
-import math
 
 TAB_CONFIG = [
     {"tab_id": "maelle", "label": "Maelle"},
@@ -67,12 +66,7 @@ def format_modal_value(value) -> str:
         return "-"
     if isinstance(value, bool):
         return "Yes" if value else "No"
-    if isinstance(value, (int, float)):
-        if isinstance(value, float) and math.isnan(value):
-            return "-"
-        return f"{value:g}"
-    text = str(value).strip()
-    return text if text else "-"
+    return format_value(value)
 
 
 layout = html.Div(
