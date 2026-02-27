@@ -267,9 +267,9 @@ grid = dag.AgGrid(
     ],
     defaultColDef={"filter": True, "sortable": True, "resizable": True},
     dashGridOptions={
-        "domLayout": "autoHeight",
+        "domLayout": "autoHeight", # Fill the height of the grid to fit the number of rows
         "theme": ag_grid_theme,
-    },  # Fill the height of the grid to fit the number of rows
+    },
 )
 
 layout = html.Div(
