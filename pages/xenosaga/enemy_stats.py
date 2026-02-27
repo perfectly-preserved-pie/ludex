@@ -1,17 +1,14 @@
 from __future__ import annotations
+from assets.xenosaga.load_sqlite_database import load_sqlite_database
 from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
+from dash_iconify import DashIconify
 from dash.exceptions import PreventUpdate
 from pandas.api.types import is_numeric_dtype
-from pathlib import Path
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import json
 import pandas as pd
 import sqlite3
-from dash_iconify import DashIconify
-
-DATA_DIR = Path(__file__).resolve().parents[2] / "assets" / "xenosaga"
-DB_PATH = DATA_DIR / "xenosaga.db"
 
 EPISODE_TABS = {
     "ep1": {"label": "Episode I", "table": "episode1"},
@@ -79,7 +76,7 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict]:
     return column_defs
 
 
-with sqlite3.connect(DB_PATH) as conn:
+with load_sqlite_database() as conn:
     episode_frames = {tab_id: load_episode_rows(conn, cfg["table"]) for tab_id, cfg in EPISODE_TABS.items()}
 
 
