@@ -215,11 +215,14 @@ CALCULATOR_DATA: dict[str, CalculatorPayload] = load_calculator_data()
 
 
 def skill_options_for(character: str) -> list[SkillOption]:
-    """Build the dropdown option list for a character's skills."""
-    return [
+    """Build the dropdown option list for a character's skills, sorted alphabetically."""
+    return sorted(
+        [
         {"label": record["Skill"], "value": record["Skill"]}
         for record in CALCULATOR_DATA[character]["records"]
-    ]
+        ],
+        key=lambda option: option["label"].lower(),
+    )
 
 
 def get_row(character: str, skill: str | None) -> CalculatorRow:
