@@ -1235,6 +1235,21 @@ layout = dbc.Container(
         dbc.Alert(
             html.Span(
                 [
+                    "Data courtesy of ",
+                    html.A(
+                        "JohnnyDamajer",
+                        href="https://docs.google.com/spreadsheets/d/1hU299Jof7Ygtg1JmbITeBxFXh5iHtOIBPB1gVCRil6o/",
+                        target="_blank",
+                        rel="noopener noreferrer",
+                    ),
+                ]
+            ),
+            color="info",
+            className="mt-2",
+        ),
+        dbc.Alert(
+            html.Span(
+                [
                     "Spreadsheet damage values are used as breakpoints. When the note text clearly exposes the formula, the calculator derives intermediate values from it.",
                 ]
             ),
