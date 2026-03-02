@@ -813,7 +813,7 @@ def build_summary_body(row: CalculatorRow, attack: float | None) -> ComponentChi
                         [
                             html.Th("Sheet Scenario"),
                             html.Th("Multiplier"),
-                            html.Th(f"Damage @ {header_attack} ATK"),
+                            html.Th(f"Damage @ {header_attack} Attack Power"),
                         ]
                     )
                 ),
@@ -963,7 +963,7 @@ skill_dropdown = dcc.Dropdown(
 
 attack_input = dmc.NumberInput(
     id="exp33-calculator-attack",
-    label="Attack stat",
+    label="Attack Power",
     value=CALCULATOR_DATA[DEFAULT_CHARACTER]["default_attack"],
     min=1,
     step=1,
@@ -1243,7 +1243,7 @@ layout = dbc.Container(
         ),
         dcc.Markdown(
             "Choose a character, pick a skill, then adjust the relevant combat state. "
-            "The result card shows the applied breakpoint or derived formula and estimates damage from your current attack stat."
+            "The result card shows the applied breakpoint or derived formula and estimates damage from your current Attack Power."
         ),
         dbc.Row(
             [
