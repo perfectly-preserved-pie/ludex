@@ -30,7 +30,7 @@ DEFAULT_SKILLS = {
     "sciel": "End Slice",
     "verso": "Strike Storm",
 }
-VERSO_RANK_ORDER = {"D": 0, "C": 1, "B": 2, "A": 3, "S": 4}
+RANK_ORDER = {"D": 0, "C": 1, "B": 2, "A": 3, "S": 4}
 
 
 def compact(children):
@@ -183,13 +183,13 @@ def parse_rank_requirement(value: str) -> str | None:
     if not match:
         return None
     rank = match.group(1)
-    return rank if rank in VERSO_RANK_ORDER else None
+    return rank if rank in RANK_ORDER else None
 
 
 def rank_at_least(current_rank: str, required_rank: str | None) -> bool:
     if required_rank is None:
         return False
-    return VERSO_RANK_ORDER.get(current_rank, -1) >= VERSO_RANK_ORDER.get(required_rank, 99)
+    return RANK_ORDER.get(current_rank, -1) >= RANK_ORDER.get(required_rank, 99)
 
 
 def build_sheet_rows(row: dict[str, object]) -> list[dict[str, object]]:
