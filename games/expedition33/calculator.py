@@ -19,6 +19,7 @@ StyleRule: TypeAlias = dict[str, str]
 CharacterStyles: TypeAlias = dict[str, StyleRule]
 NumericInput: TypeAlias = int | float | None
 ToggleInput: TypeAlias = bool | None
+ControlStyles: TypeAlias = dict[str, StyleRule]
 
 
 class CalculationResult(TypedDict):
@@ -62,6 +63,8 @@ DEFAULT_SKILLS = {
     "verso": "Strike Storm",
 }
 RANK_ORDER = {"D": 0, "C": 1, "B": 2, "A": 3, "S": 4}
+VISIBLE_STYLE: StyleRule = {}
+HIDDEN_STYLE: StyleRule = {"display": "none"}
 
 
 def compact(children: ComponentChildren) -> ComponentChildren:
@@ -804,15 +807,121 @@ def build_summary_body(row: CalculatorRow, attack: float | None) -> ComponentChi
 
 def build_character_section_styles(active_character: str) -> tuple[list[str], CharacterStyles]:
     """Return accordion visibility styles for the active character."""
+
     active_item = [f"setup-{active_character}"]
-    hidden: StyleRule = {"display": "none"}
-    visible: StyleRule = {}
 
     styles = {
-        character: visible if character == active_character else hidden
+        character: VISIBLE_STYLE if character == active_character else HIDDEN_STYLE
         for character in CHARACTER_META
     }
     return active_item, styles
+
+
+def uses_mask_condition(row: CalculatorRow) -> bool:
+    """Return whether a Monoco row's sheet data explicitly depends on mask state."""
+
+    texts = (
+        text_from_row(row, "Condition 1"),
+        text_from_row(row, "Con Max Dmg"),
+        text_from_row(row, "Notes"),
+    )
+    return any("mask" in text.lower() for text in texts if text)
+
+
+def build_skill_control_styles(character: str, row: CalculatorRow) -> ControlStyles:
+    """Return per-control visibility styles for the selected character skill."""
+
+    skill = clean_text(row.get("Skill"))
+    condition = text_from_row(row, "Condition 1", "Condition").lower()
+    max_condition = text_from_row(row, "Con Max Dmg", "ConTwilight").lower()
+    styles: ControlStyles = {}
+
+    def set_visibility(control: str, is_visible: bool) -> None:
+        """Store the display style for a single control wrapper."""
+
+        styles[control] = VISIBLE_STYLE if is_visible else HIDDEN_STYLE
+
+    if character == "gustave":
+        set_visibility("gustave_charges", skill.startswith("Overcharge"))
+        return styles
+
+    if character == "lune":
+        set_visibility(
+            "lune_stains",
+            "stain" in condition or "stain" in max_condition or skill in {"Storm Caller"},
+        )
+        set_visibility(
+            "lune_turns",
+            skill.startswith("Burn ")
+            or condition == "turn start dmg"
+            or skill in {"Fire Rage", "Fire Rage Stained", "Storm Caller"},
+        )
+        set_visibility("lune_all_crits", "crit" in max_condition)
+        return styles
+
+    if character == "maelle":
+        set_visibility("maelle_stance", skill in {"Momentum Strike", "Percee"})
+        set_visibility("maelle_burn_stacks", skill in {"Burning Canvas", "Combustion"})
+        set_visibility("maelle_hits_taken", skill == "Revenge")
+        set_visibility("maelle_marked", skill in {"G-Homage", "Momentum Strike", "Percee"})
+        set_visibility("maelle_all_crits", skill == "Sword Ballet")
+        return styles
+
+    if character == "monoco":
+        set_visibility(
+            "monoco_turns",
+            skill.startswith("Burn ") or skill in {"Sakapate Fire", "Abberation Light", "Braseleur Smash"},
+        )
+        set_visibility("monoco_mask", uses_mask_condition(row))
+        set_visibility("monoco_stunned", skill in {"Mighty Strike", "Sakapate Estoc"})
+        set_visibility("monoco_marked", skill == "Sakapate Slam")
+        set_visibility("monoco_powerless", skill == "Obscur Sword")
+        set_visibility("monoco_burning", skill == "Danseuse Waltz")
+        set_visibility("monoco_low_life", skill == "Cultist Slashes")
+        set_visibility("monoco_full_life", skill == "Cultist Blood")
+        set_visibility("monoco_all_crits", skill in {"Chevalier Thrusts", "Sakapate Explosion"})
+        return styles
+
+    if character == "sciel":
+        set_visibility(
+            "sciel_foretell",
+            skill in SCIEL_FORETELL_RATES or skill in {"Our Sacrifice", "Sealed Fate", "Firing Shadow"},
+        )
+        set_visibility("sciel_twilight", number_from_row(row, "TwilightDmg") is not None)
+        set_visibility("sciel_full_life", skill == "Our Sacrifice")
+        return styles
+
+    if character == "verso":
+        set_visibility(
+            "verso_rank",
+            skill not in {"Ranged Attack", "Basic Attack", "Counter"}
+            and (
+                parse_rank_requirement(text_from_row(row, "Condition")) is not None
+                or number_from_row(row, "SRankMAX") is not None
+                or skill in {"Follow Up", "Ascending Assault", "Speed Burst", "End Bringer", "Steeled Strike"}
+            ),
+        )
+        set_visibility("verso_shots", skill == "Follow Up")
+        set_visibility("verso_uses", skill in {"Steeled Strike", "Ascending Assault"})
+        set_visibility("verso_stunned", skill == "End Bringer")
+        set_visibility("verso_speed_bonus", skill == "Speed Burst")
+        return styles
+
+    return styles
+
+
+def build_empty_control_notice(character: str) -> html.Div:
+    """Build the placeholder shown when a skill has no extra inputs."""
+
+    return html.Div(
+        dmc.Text(
+            f"{CHARACTER_META[character]['label']} has no extra inputs for this skill.",
+            c="dimmed",
+            size="sm",
+        ),
+        id=f"exp33-calculator-empty-{character}",
+        style=HIDDEN_STYLE,
+    )
 
 
 character_select = dmc.Select(
@@ -843,14 +952,18 @@ calculator_controls = dbc.Accordion(
         dbc.AccordionItem(
             dmc.Stack(
                 [
-                    dmc.NumberInput(
-                        id="exp33-calculator-gustave-charges",
-                        label="Charges",
-                        value=0,
-                        min=0,
-                        max=10,
-                        step=1,
+                    html.Div(
+                        dmc.NumberInput(
+                            id="exp33-calculator-gustave-charges",
+                            label="Charges",
+                            value=0,
+                            min=0,
+                            max=10,
+                            step=1,
+                        ),
+                        id="exp33-calculator-control-gustave-charges",
                     ),
+                    build_empty_control_notice("gustave"),
                 ],
                 gap="sm",
             ),
@@ -862,23 +975,33 @@ calculator_controls = dbc.Accordion(
         dbc.AccordionItem(
             dmc.Stack(
                 [
-                    dmc.NumberInput(
-                        id="exp33-calculator-lune-stains",
-                        label="Stains",
-                        value=0,
-                        min=0,
-                        max=4,
-                        step=1,
+                    html.Div(
+                        dmc.NumberInput(
+                            id="exp33-calculator-lune-stains",
+                            label="Stains",
+                            value=0,
+                            min=0,
+                            max=4,
+                            step=1,
+                        ),
+                        id="exp33-calculator-control-lune-stains",
                     ),
-                    dmc.NumberInput(
-                        id="exp33-calculator-lune-turns",
-                        label="Turns / burn ticks",
-                        value=1,
-                        min=1,
-                        max=5,
-                        step=1,
+                    html.Div(
+                        dmc.NumberInput(
+                            id="exp33-calculator-lune-turns",
+                            label="Turns / burn ticks",
+                            value=1,
+                            min=1,
+                            max=5,
+                            step=1,
+                        ),
+                        id="exp33-calculator-control-lune-turns",
                     ),
-                    dmc.Switch(id="exp33-calculator-lune-all-crits", label="All hits crit"),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-lune-all-crits", label="All hits crit"),
+                        id="exp33-calculator-control-lune-all-crits",
+                    ),
+                    build_empty_control_notice("lune"),
                 ],
                 gap="sm",
             ),
@@ -889,31 +1012,47 @@ calculator_controls = dbc.Accordion(
         dbc.AccordionItem(
             dmc.Stack(
                 [
-                    dmc.Select(
-                        id="exp33-calculator-maelle-stance",
-                        label="Current stance",
-                        value="Offensive",
-                        data=["Offensive", "Defensive", "Virtuoso", "Stanceless"],
-                        clearable=False,
+                    html.Div(
+                        dmc.Select(
+                            id="exp33-calculator-maelle-stance",
+                            label="Current stance",
+                            value="Offensive",
+                            data=["Offensive", "Defensive", "Virtuoso", "Stanceless"],
+                            clearable=False,
+                        ),
+                        id="exp33-calculator-control-maelle-stance",
                     ),
-                    dmc.NumberInput(
-                        id="exp33-calculator-maelle-burn-stacks",
-                        label="Burn stacks",
-                        value=0,
-                        min=0,
-                        max=100,
-                        step=1,
+                    html.Div(
+                        dmc.NumberInput(
+                            id="exp33-calculator-maelle-burn-stacks",
+                            label="Burn stacks",
+                            value=0,
+                            min=0,
+                            max=100,
+                            step=1,
+                        ),
+                        id="exp33-calculator-control-maelle-burn-stacks",
                     ),
-                    dmc.NumberInput(
-                        id="exp33-calculator-maelle-hits-taken",
-                        label="Hits taken last round",
-                        value=0,
-                        min=0,
-                        max=5,
-                        step=1,
+                    html.Div(
+                        dmc.NumberInput(
+                            id="exp33-calculator-maelle-hits-taken",
+                            label="Hits taken last round",
+                            value=0,
+                            min=0,
+                            max=5,
+                            step=1,
+                        ),
+                        id="exp33-calculator-control-maelle-hits-taken",
                     ),
-                    dmc.Switch(id="exp33-calculator-maelle-marked", label="Target is marked"),
-                    dmc.Switch(id="exp33-calculator-maelle-all-crits", label="All hits crit"),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-maelle-marked", label="Target is marked"),
+                        id="exp33-calculator-control-maelle-marked",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-maelle-all-crits", label="All hits crit"),
+                        id="exp33-calculator-control-maelle-all-crits",
+                    ),
+                    build_empty_control_notice("maelle"),
                 ],
                 gap="sm",
             ),
@@ -925,22 +1064,50 @@ calculator_controls = dbc.Accordion(
         dbc.AccordionItem(
             dmc.Stack(
                 [
-                    dmc.NumberInput(
-                        id="exp33-calculator-monoco-turns",
-                        label="Burn / setup turns",
-                        value=1,
-                        min=1,
-                        max=3,
-                        step=1,
+                    html.Div(
+                        dmc.NumberInput(
+                            id="exp33-calculator-monoco-turns",
+                            label="Burn / setup turns",
+                            value=1,
+                            min=1,
+                            max=3,
+                            step=1,
+                        ),
+                        id="exp33-calculator-control-monoco-turns",
                     ),
-                    dmc.Switch(id="exp33-calculator-monoco-mask", label="Mask active"),
-                    dmc.Switch(id="exp33-calculator-monoco-stunned", label="Target is stunned"),
-                    dmc.Switch(id="exp33-calculator-monoco-marked", label="Target is marked"),
-                    dmc.Switch(id="exp33-calculator-monoco-powerless", label="Target is powerless"),
-                    dmc.Switch(id="exp33-calculator-monoco-burning", label="Target is burning"),
-                    dmc.Switch(id="exp33-calculator-monoco-low-life", label="Monoco is low life"),
-                    dmc.Switch(id="exp33-calculator-monoco-full-life", label="Monoco is full life"),
-                    dmc.Switch(id="exp33-calculator-monoco-all-crits", label="All hits crit"),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-monoco-mask", label="Mask active"),
+                        id="exp33-calculator-control-monoco-mask",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-monoco-stunned", label="Target is stunned"),
+                        id="exp33-calculator-control-monoco-stunned",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-monoco-marked", label="Target is marked"),
+                        id="exp33-calculator-control-monoco-marked",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-monoco-powerless", label="Target is powerless"),
+                        id="exp33-calculator-control-monoco-powerless",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-monoco-burning", label="Target is burning"),
+                        id="exp33-calculator-control-monoco-burning",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-monoco-low-life", label="Monoco is low life"),
+                        id="exp33-calculator-control-monoco-low-life",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-monoco-full-life", label="Monoco is full life"),
+                        id="exp33-calculator-control-monoco-full-life",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-monoco-all-crits", label="All hits crit"),
+                        id="exp33-calculator-control-monoco-all-crits",
+                    ),
+                    build_empty_control_notice("monoco"),
                 ],
                 gap="sm",
             ),
@@ -952,16 +1119,26 @@ calculator_controls = dbc.Accordion(
         dbc.AccordionItem(
             dmc.Stack(
                 [
-                    dmc.NumberInput(
-                        id="exp33-calculator-sciel-foretell",
-                        label="Foretell",
-                        value=0,
-                        min=0,
-                        max=30,
-                        step=1,
+                    html.Div(
+                        dmc.NumberInput(
+                            id="exp33-calculator-sciel-foretell",
+                            label="Foretell",
+                            value=0,
+                            min=0,
+                            max=30,
+                            step=1,
+                        ),
+                        id="exp33-calculator-control-sciel-foretell",
                     ),
-                    dmc.Switch(id="exp33-calculator-sciel-twilight", label="Twilight active"),
-                    dmc.Switch(id="exp33-calculator-sciel-full-life", label="Allies at full life"),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-sciel-twilight", label="Twilight active"),
+                        id="exp33-calculator-control-sciel-twilight",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-sciel-full-life", label="Allies at full life"),
+                        id="exp33-calculator-control-sciel-full-life",
+                    ),
+                    build_empty_control_notice("sciel"),
                 ],
                 gap="sm",
             ),
@@ -973,31 +1150,47 @@ calculator_controls = dbc.Accordion(
         dbc.AccordionItem(
             dmc.Stack(
                 [
-                    dmc.Select(
-                        id="exp33-calculator-verso-rank",
-                        label="Current rank",
-                        value="D",
-                        data=["D", "C", "B", "A", "S"],
-                        clearable=False,
+                    html.Div(
+                        dmc.Select(
+                            id="exp33-calculator-verso-rank",
+                            label="Current rank",
+                            value="D",
+                            data=["D", "C", "B", "A", "S"],
+                            clearable=False,
+                        ),
+                        id="exp33-calculator-control-verso-rank",
                     ),
-                    dmc.NumberInput(
-                        id="exp33-calculator-verso-shots",
-                        label="Ranged shots this turn",
-                        value=0,
-                        min=0,
-                        max=10,
-                        step=1,
+                    html.Div(
+                        dmc.NumberInput(
+                            id="exp33-calculator-verso-shots",
+                            label="Ranged shots this turn",
+                            value=0,
+                            min=0,
+                            max=10,
+                            step=1,
+                        ),
+                        id="exp33-calculator-control-verso-shots",
                     ),
-                    dmc.NumberInput(
-                        id="exp33-calculator-verso-uses",
-                        label="Uses / setup turns",
-                        value=1,
-                        min=1,
-                        max=6,
-                        step=1,
+                    html.Div(
+                        dmc.NumberInput(
+                            id="exp33-calculator-verso-uses",
+                            label="Uses / setup turns",
+                            value=1,
+                            min=1,
+                            max=6,
+                            step=1,
+                        ),
+                        id="exp33-calculator-control-verso-uses",
                     ),
-                    dmc.Switch(id="exp33-calculator-verso-stunned", label="Target is stunned"),
-                    dmc.Switch(id="exp33-calculator-verso-speed-bonus", label="Max speed bonus active"),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-verso-stunned", label="Target is stunned"),
+                        id="exp33-calculator-control-verso-stunned",
+                    ),
+                    html.Div(
+                        dmc.Switch(id="exp33-calculator-verso-speed-bonus", label="Max speed bonus active"),
+                        id="exp33-calculator-control-verso-speed-bonus",
+                    ),
+                    build_empty_control_notice("verso"),
                 ],
                 gap="sm",
             ),
@@ -1108,14 +1301,101 @@ def update_skill_dropdown(character: str | None) -> tuple[list[SkillOption], str
     Output("exp33-calculator-item-monoco", "style"),
     Output("exp33-calculator-item-sciel", "style"),
     Output("exp33-calculator-item-verso", "style"),
+    Output("exp33-calculator-control-gustave-charges", "style"),
+    Output("exp33-calculator-control-lune-stains", "style"),
+    Output("exp33-calculator-control-lune-turns", "style"),
+    Output("exp33-calculator-control-lune-all-crits", "style"),
+    Output("exp33-calculator-control-maelle-stance", "style"),
+    Output("exp33-calculator-control-maelle-burn-stacks", "style"),
+    Output("exp33-calculator-control-maelle-hits-taken", "style"),
+    Output("exp33-calculator-control-maelle-marked", "style"),
+    Output("exp33-calculator-control-maelle-all-crits", "style"),
+    Output("exp33-calculator-control-monoco-turns", "style"),
+    Output("exp33-calculator-control-monoco-mask", "style"),
+    Output("exp33-calculator-control-monoco-stunned", "style"),
+    Output("exp33-calculator-control-monoco-marked", "style"),
+    Output("exp33-calculator-control-monoco-powerless", "style"),
+    Output("exp33-calculator-control-monoco-burning", "style"),
+    Output("exp33-calculator-control-monoco-low-life", "style"),
+    Output("exp33-calculator-control-monoco-full-life", "style"),
+    Output("exp33-calculator-control-monoco-all-crits", "style"),
+    Output("exp33-calculator-empty-gustave", "style"),
+    Output("exp33-calculator-empty-lune", "style"),
+    Output("exp33-calculator-empty-maelle", "style"),
+    Output("exp33-calculator-empty-monoco", "style"),
+    Output("exp33-calculator-empty-sciel", "style"),
+    Output("exp33-calculator-empty-verso", "style"),
+    Output("exp33-calculator-control-sciel-foretell", "style"),
+    Output("exp33-calculator-control-sciel-twilight", "style"),
+    Output("exp33-calculator-control-sciel-full-life", "style"),
+    Output("exp33-calculator-control-verso-rank", "style"),
+    Output("exp33-calculator-control-verso-shots", "style"),
+    Output("exp33-calculator-control-verso-uses", "style"),
+    Output("exp33-calculator-control-verso-stunned", "style"),
+    Output("exp33-calculator-control-verso-speed-bonus", "style"),
     Input("exp33-calculator-character", "value"),
+    Input("exp33-calculator-skill", "value"),
 )
 def sync_visible_controls(
     character: str | None,
-) -> tuple[list[str], StyleRule, StyleRule, StyleRule, StyleRule, StyleRule, StyleRule]:
+    skill: str | None,
+) -> tuple[
+    list[str],
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+    StyleRule,
+]:
     """Show only the control section relevant to the selected character."""
     active_character = character or DEFAULT_CHARACTER
     active_item, styles = build_character_section_styles(active_character)
+    row = get_row(active_character, skill)
+    control_styles = build_skill_control_styles(active_character, row)
+
+    def control_style(control: str) -> StyleRule:
+        """Return the style for a single control wrapper."""
+
+        return control_styles.get(control, HIDDEN_STYLE)
+
+    def empty_state_style(prefix: str) -> StyleRule:
+        """Show the placeholder when no controls are visible for the section."""
+
+        return VISIBLE_STYLE if not any(key.startswith(prefix) and value == VISIBLE_STYLE for key, value in control_styles.items()) else HIDDEN_STYLE
+
     return (
         active_item,
         styles["gustave"],
@@ -1124,6 +1404,38 @@ def sync_visible_controls(
         styles["monoco"],
         styles["sciel"],
         styles["verso"],
+        control_style("gustave_charges"),
+        control_style("lune_stains"),
+        control_style("lune_turns"),
+        control_style("lune_all_crits"),
+        control_style("maelle_stance"),
+        control_style("maelle_burn_stacks"),
+        control_style("maelle_hits_taken"),
+        control_style("maelle_marked"),
+        control_style("maelle_all_crits"),
+        control_style("monoco_turns"),
+        control_style("monoco_mask"),
+        control_style("monoco_stunned"),
+        control_style("monoco_marked"),
+        control_style("monoco_powerless"),
+        control_style("monoco_burning"),
+        control_style("monoco_low_life"),
+        control_style("monoco_full_life"),
+        control_style("monoco_all_crits"),
+        empty_state_style("gustave"),
+        empty_state_style("lune"),
+        empty_state_style("maelle"),
+        empty_state_style("monoco"),
+        empty_state_style("sciel"),
+        empty_state_style("verso"),
+        control_style("sciel_foretell"),
+        control_style("sciel_twilight"),
+        control_style("sciel_full_life"),
+        control_style("verso_rank"),
+        control_style("verso_shots"),
+        control_style("verso_uses"),
+        control_style("verso_stunned"),
+        control_style("verso_speed_bonus"),
     )
 
 
