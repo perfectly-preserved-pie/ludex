@@ -1231,7 +1231,7 @@ calculator_controls = dbc.Accordion(
 
 layout = dbc.Container(
     [
-        html.H1("Calculator"),
+        html.H1("Skill Damage Calculator"),
         dbc.Alert(
             html.Span(
                 [
@@ -1597,4 +1597,4 @@ def update_calculator_result(
     )
 
 
-register_page(__name__, path="/calculator", name="Calculator", layout=layout)
+register_page(__name__, path="/calculator", name="Expedition 33 Skill Damage Calculator", title="Expedition 33 Skill Damage Calculator", layout=layout)
