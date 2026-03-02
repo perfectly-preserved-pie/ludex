@@ -1623,4 +1623,4 @@ def update_calculator_result(
     )
 
 
-register_page(__name__, path="/calculator", name="Expedition 33 Skill Damage Calculator", title="Expedition 33 Skill Damage Calculator", layout=layout)
+register_page(__name__, path="/calculator", name="Skill Damage Calculator", title="Expedition 33 Skill Damage Calculator", layout=layout)
