@@ -597,6 +597,32 @@ def calculate_sciel(row: CalculatorRow, state: CalculatorState) -> CalculationRe
     return base_result(row)
 
 
+def apply_verso_rank_bonus(rank: str, skill_result: CalculationResult) -> CalculationResult:
+    """Apply Verso's general rank bonus unless the sheet value already includes it."""
+    multiplier = skill_result.get("multiplier")
+    source = skill_result.get("source", "")
+    if multiplier is None or source == "SRankMAX":
+        return skill_result
+
+    rank_bonus = {
+        "D": 1.0,
+        "C": 1.25,
+        "B": 1.5,
+        "A": 2.0,
+        "S": 3.0,
+    }.get(rank, 1.0)
+
+    if rank_bonus == 1.0:
+        return skill_result
+
+    return result(
+        round(multiplier * rank_bonus, 2),
+        f"{skill_result['scenario']} | {rank} Rank bonus",
+        f"{source} + general rank bonus",
+        skill_result.get("warning"),
+    )
+
+
 def calculate_verso(row: CalculatorRow, state: CalculatorState) -> CalculationResult:
     """Calculate Verso skill damage from rank and setup state."""
     skill = clean_text(row.get("Skill"))
@@ -614,23 +640,23 @@ def calculate_verso(row: CalculatorRow, state: CalculatorState) -> CalculationRe
         if stunned and rank == "S" and maximum is not None:
             return result(maximum, "Stunned target at S Rank", "SRankMAX")
         if stunned and conditional is not None:
-            return result(conditional, "Stunned target", "ConDmg")
-        return base_result(row)
+            return apply_verso_rank_bonus(rank, result(conditional, "Stunned target", "ConDmg"))
+        return apply_verso_rank_bonus(rank, base_result(row))
 
     if skill == "Steeled Strike":
         if rank == "S" and uses >= 2 and maximum is not None:
             return result(maximum, "S Rank with full setup", "SRankMAX")
         if rank == "S" and conditional is not None:
-            return result(conditional, "S Rank", "ConDmg")
-        return base_result(row)
+            return apply_verso_rank_bonus(rank, result(conditional, "S Rank", "ConDmg"))
+        return apply_verso_rank_bonus(rank, base_result(row))
 
     if skill == "Follow Up":
         if rank == "S" and shots >= 10 and maximum is not None:
             return result(maximum, "10 shots at S Rank", "SRankMAX")
         if shots > 0:
             multiplier = round((base_multiplier or 0) * (1 + (0.5 * shots)), 2)
-            return result(multiplier, f"{shots} ranged shot(s)", "Derived from note text")
-        return base_result(row)
+            return apply_verso_rank_bonus(rank, result(multiplier, f"{shots} ranged shot(s)", "Derived from note text"))
+        return apply_verso_rank_bonus(rank, base_result(row))
 
     if skill == "Ascending Assault":
         if rank == "S" and uses >= 6 and maximum is not None:
@@ -638,24 +664,24 @@ def calculate_verso(row: CalculatorRow, state: CalculatorState) -> CalculationRe
         if uses >= 2:
             multiplier = round((base_multiplier or 0) * (1 + (0.3 * min(uses - 1, 5))), 2)
             if uses >= 6 and conditional is not None:
-                return result(conditional, "6th use", "ConDmg")
-            return result(multiplier, f"Use {uses}", "Derived from note text")
-        return base_result(row)
+                return apply_verso_rank_bonus(rank, result(conditional, "6th use", "ConDmg"))
+            return apply_verso_rank_bonus(rank, result(multiplier, f"Use {uses}", "Derived from note text"))
+        return apply_verso_rank_bonus(rank, base_result(row))
 
     if skill == "Speed Burst":
         if speed_bonus and maximum is not None:
             return result(maximum, "C Rank with full speed bonus", "SRankMAX")
         if rank_at_least(rank, "C") and conditional is not None:
-            return result(conditional, "C Rank", "ConDmg")
-        return base_result(row)
+            return apply_verso_rank_bonus(rank, result(conditional, "C Rank", "ConDmg"))
+        return apply_verso_rank_bonus(rank, base_result(row))
 
     if rank == "S" and maximum is not None and skill not in {"Ranged Attack", "Basic Attack", "Counter"}:
         return result(maximum, "S Rank", "SRankMAX")
 
     if rank_at_least(rank, required_rank) and conditional is not None:
-        return result(conditional, f"{required_rank} Rank", "ConDmg")
+        return apply_verso_rank_bonus(rank, result(conditional, f"{required_rank} Rank", "ConDmg"))
 
-    return base_result(row)
+    return apply_verso_rank_bonus(rank, base_result(row))
 
 
 def calculate_skill_result(
