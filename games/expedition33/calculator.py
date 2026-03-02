@@ -596,7 +596,7 @@ def build_badges(character: str, row: dict[str, object], current_cost: str) -> l
 
     badges = [
         dmc.Badge(CHARACTER_META[character]["label"], color="blue", variant="light"),
-        dmc.Badge(f"Cost: {current_cost}", color="gray", variant="outline"),
+        dmc.Badge(f"Cost: {current_cost} AP", color="gray", variant="outline"),
         dmc.Badge(aoe_label, color="teal", variant="outline"),
     ]
 
