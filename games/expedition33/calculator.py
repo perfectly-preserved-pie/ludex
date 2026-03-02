@@ -390,34 +390,53 @@ def calculate_maelle(row: CalculatorRow, state: CalculatorState) -> CalculationR
     skill = clean_text(row.get("Skill"))
     base_multiplier = number_from_row(row, "Damage Multi")
     maximum = number_from_row(row, "DmMax")
+    stance = clean_text(state.get("stance")) or "Stanceless"
     burn_stacks = clamp_int(state.get("burn_stacks"), 0, 100)
     hits_taken = clamp_int(state.get("hits_taken"), 0, 5)
     marked = bool(state.get("marked"))
     all_crits = bool(state.get("all_crits"))
     turns = clamp_int(state.get("turns"), 1, 3)
 
+    def with_stance(skill_result: CalculationResult) -> CalculationResult:
+        """Apply Maelle's offensive or virtuoso stance multiplier to hit damage."""
+        multiplier = skill_result.get("multiplier")
+        stance_multiplier = {
+            "Offensive": 1.5,
+            "Virtuoso": 3.0,
+        }.get(stance)
+
+        if multiplier is None or stance_multiplier is None or skill.startswith("Burn "):
+            return skill_result
+
+        return result(
+            round(multiplier * stance_multiplier, 2),
+            f"{skill_result['scenario']} | {stance} stance",
+            f"{skill_result['source']} + stance bonus",
+            skill_result.get("warning"),
+        )
+
     if skill == "Burning Canvas":
         multiplier = round((base_multiplier or 0) * (1 + (0.1 * burn_stacks)), 2)
-        return result(multiplier, f"{burn_stacks} Burn stack(s)", "Derived from note text")
+        return with_stance(result(multiplier, f"{burn_stacks} Burn stack(s)", "Derived from note text"))
 
     if skill == "Combustion":
         multiplier = round((base_multiplier or 0) * (1 + (0.4 * min(burn_stacks, 10))), 2)
-        return result(multiplier, f"Consume {min(burn_stacks, 10)} Burn", "Derived from note text")
+        return with_stance(result(multiplier, f"Consume {min(burn_stacks, 10)} Burn", "Derived from note text"))
 
     if skill == "Revenge":
         multiplier = round((base_multiplier or 0) * (1 + (1.5 * hits_taken)), 2)
-        return result(multiplier, f"{hits_taken} hit(s) taken last round", "Derived from note text")
+        return with_stance(result(multiplier, f"{hits_taken} hit(s) taken last round", "Derived from note text"))
 
     if skill.startswith("Burn "):
         return result(round((base_multiplier or 0) * turns, 2), f"{turns} Burn tick(s)", "Derived from burn rows")
 
     if skill in {"G-Homage", "Momentum Strike", "Percee"} and marked and maximum is not None:
-        return result(maximum, "Marked target", "DmMax")
+        return with_stance(result(maximum, "Marked target", "DmMax"))
 
     if skill == "Sword Ballet" and all_crits and maximum is not None:
-        return result(maximum, "All crits", "DmMax")
+        return with_stance(result(maximum, "All crits", "DmMax"))
 
-    return base_result(row)
+    return with_stance(base_result(row))
 
 
 def calculate_monoco(row: CalculatorRow, state: CalculatorState) -> CalculationResult:
@@ -863,7 +882,7 @@ def build_skill_control_styles(character: str, row: CalculatorRow) -> ControlSty
         return styles
 
     if character == "maelle":
-        set_visibility("maelle_stance", skill in {"Momentum Strike", "Percee"})
+        set_visibility("maelle_stance", not skill.startswith("Burn "))
         set_visibility("maelle_burn_stacks", skill in {"Burning Canvas", "Combustion"})
         set_visibility("maelle_hits_taken", skill == "Revenge")
         set_visibility("maelle_marked", skill in {"G-Homage", "Momentum Strike", "Percee"})
