@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
 from dash.exceptions import PreventUpdate
-from games.expedition33.helpers import build_tab_payloads, format_value
+from games.expedition33.helpers import build_tab_payloads, build_title_card, format_value
 from pathlib import Path
 from typing import Any
 import dash_ag_grid as dag
@@ -82,7 +82,7 @@ def format_modal_value(value: Any) -> str:
 
 layout = html.Div(
     [
-        html.H1("Skill Damage"),
+        build_title_card("Skill Damage"),
         dbc.Alert(
             html.Span(
                 [

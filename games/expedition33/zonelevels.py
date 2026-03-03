@@ -2,6 +2,7 @@ from dash import dcc, html
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 from assets.expedition33.zonelevels_mapping import zones
+from games.expedition33.helpers import build_title_card
 
 # Dark theme for ag-grid
 # https://www.dash-mantine-components.com/dash-ag-grid#dash-ag-grid-%E2%89%A5-v33
@@ -32,7 +33,7 @@ grid = dag.AgGrid(
 
 layout = html.Div(
     [
-        html.H1("Zone Levels"),
+        build_title_card("Zone Levels"),
         dbc.Alert(
             html.Span([
                 "Data courtesy of ",

@@ -19,7 +19,7 @@ from games.expedition33.calculator.core import (
     HIDDEN_STYLE,
     skill_options_for,
 )
-from games.expedition33.helpers import format_value
+from games.expedition33.helpers import build_title_card, format_value
 from games.expedition33.calculator.pictos import PICTO_OPTIONS, PictoSummary
 
 
@@ -725,9 +725,11 @@ calculator_controls = dbc.Accordion(
     flush=True,
 )
 
+title_card = build_title_card("Skill Damage Calculator")
+
 layout = dbc.Container(
     [
-        html.H1("Skill Damage Calculator"),
+        title_card,
         dbc.Alert(
             html.Div(
                 [

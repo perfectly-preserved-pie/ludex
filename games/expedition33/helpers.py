@@ -1,8 +1,30 @@
 from __future__ import annotations
+from dash import html
 from pandas.api.types import is_numeric_dtype
 from pathlib import Path
 from typing import Any
+import dash_bootstrap_components as dbc
 import pandas as pd
+
+
+def build_title_card(title: str, subtitle: str = "For those who come after.") -> dbc.Card:
+    """Build the shared Expedition 33 title card.
+
+    Args:
+        title: The main page title.
+        subtitle: The italic subtitle shown below the title.
+
+    Returns:
+        A Bootstrap card using the same structure as the Xenosaga title card.
+    """
+
+    return dbc.Card(
+        [
+            html.H3(title, className="card-title"),
+            html.I(subtitle, style={"marginBottom": "10px"}),
+        ],
+        body=True,
+    )
 
 def clean_frame(frame: pd.DataFrame) -> pd.DataFrame:
     """Normalize a raw spreadsheet export before displaying it.
