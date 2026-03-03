@@ -12,7 +12,7 @@ from games.expedition33.calculator.core import (
     extract_first_int,
     number_from_row,
     parse_rank_requirement,
-    rank_at_least,
+    rank_matches,
     result,
     text_from_row,
 )
@@ -802,7 +802,7 @@ def calculate_verso(
         return apply_verso_rank_bonus(rank, base_result(row), not disable_rank_bonus)
 
     if mode == "rank_damage":
-        if not disable_rank_bonus and rank_at_least(rank, required_rank) and conditional is not None:
+        if not disable_rank_bonus and rank_matches(rank, required_rank) and conditional is not None:
             return apply_verso_rank_bonus(
                 rank,
                 result(conditional, f"{required_rank} Rank", "ConDmg"),
@@ -842,7 +842,7 @@ def calculate_verso(
         )
 
     if mode == "speed_burst":
-        rank_ready = not disable_rank_bonus and rank_at_least(rank, required_rank)
+        rank_ready = not disable_rank_bonus and rank_matches(rank, required_rank)
         if speed_bonus and rank_ready and maximum is not None:
             return result(maximum, f"{required_rank} Rank + max speed bonus", "SRankMAX")
         if speed_bonus:
@@ -860,7 +860,7 @@ def calculate_verso(
         return apply_verso_rank_bonus(rank, base_result(row), not disable_rank_bonus)
 
     if mode == "steeled_strike":
-        if not disable_rank_bonus and rank_at_least(rank, required_rank) and conditional is not None:
+        if not disable_rank_bonus and rank_matches(rank, required_rank) and conditional is not None:
             return apply_verso_rank_bonus(
                 rank,
                 result(
@@ -885,7 +885,7 @@ def calculate_verso(
     if mode == "berserk":
         multiplier = base_multiplier or 0
         scenario_parts = [f"{missing_health}% missing HP"]
-        if not disable_rank_bonus and rank_at_least(rank, required_rank):
+        if not disable_rank_bonus and rank_matches(rank, required_rank):
             multiplier *= 1 + (0.15 * missing_health)
             scenario_parts.append(f"{required_rank} Rank")
         return apply_verso_rank_bonus(
@@ -929,14 +929,14 @@ def calculate_verso(
     if skill == "Speed Burst":
         if speed_bonus and maximum is not None:
             return result(maximum, "C Rank with full speed bonus", "SRankMAX")
-        if rank_at_least(rank, "C") and conditional is not None:
+        if rank_matches(rank, "C") and conditional is not None:
             return apply_verso_rank_bonus(rank, result(conditional, "C Rank", "ConDmg"), not disable_rank_bonus)
         return apply_verso_rank_bonus(rank, base_result(row), not disable_rank_bonus)
 
     if rank == "S" and maximum is not None and skill not in {"Ranged Attack", "Basic Attack", "Counter"}:
         return result(maximum, "S Rank", "SRankMAX")
 
-    if rank_at_least(rank, required_rank) and conditional is not None:
+    if rank_matches(rank, required_rank) and conditional is not None:
         return apply_verso_rank_bonus(rank, result(conditional, f"{required_rank} Rank", "ConDmg"), not disable_rank_bonus)
 
     return apply_verso_rank_bonus(rank, base_result(row), not disable_rank_bonus)

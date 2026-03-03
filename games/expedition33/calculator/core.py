@@ -422,21 +422,21 @@ def parse_rank_requirement(value: str) -> str | None:
     return rank if rank in RANK_ORDER else None
 
 
-def rank_at_least(current_rank: str, required_rank: str | None) -> bool:
-    """Check whether a Verso rank meets a minimum requirement.
+def rank_matches(current_rank: str, required_rank: str | None) -> bool:
+    """Check whether a Verso rank matches an exact requirement.
 
     Args:
         current_rank: The currently selected Verso rank.
-        required_rank: The minimum rank required by the skill.
+        required_rank: The exact rank required by the skill.
 
     Returns:
-        ``True`` when the current rank is at least the required rank, otherwise
-        ``False``.
+        ``True`` when the current rank exactly matches the required rank,
+        otherwise ``False``.
     """
 
     if required_rank is None:
         return False
-    return RANK_ORDER.get(current_rank, -1) >= RANK_ORDER.get(required_rank, 99)
+    return clean_text(current_rank) == clean_text(required_rank)
 
 
 def build_sheet_rows(row: CalculatorRow) -> list[SheetScenario]:
@@ -582,7 +582,7 @@ def calculate_current_cost(character: str, row: CalculatorRow, state: Calculator
         rank = clean_text(state.get("rank")) or "D"
         if skill in {"Follow Up", "Ascending Assault"} and rank == "S":
             return "2"
-        if skill == "Perfect Break" and rank_at_least(rank, "B"):
+        if skill == "Perfect Break" and rank_matches(rank, "B"):
             return "5"
         if skill == "Phantom Stars" and rank == "S":
             return "5"
