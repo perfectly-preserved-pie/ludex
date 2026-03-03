@@ -1115,13 +1115,13 @@ attack_input = dmc.NumberInput(
 
 pictos_select = dmc.MultiSelect(
     id="exp33-calculator-pictos",
-    label="Pictos",
+    label="Pictos/Lumina",
     data=PICTO_OPTIONS,
     value=[],
     searchable=True,
     clearable=True,
-    placeholder="Select supported damage Pictos",
-    description="Only directly calculable damage Pictos from the sheet are listed here.",
+    placeholder="Select supported damage Pictos/Lumina",
+    description="Only directly calculable damage Pictos/Lumina from the sheet are listed here.",
 )
 
 picto_controls = dbc.Collapse(
