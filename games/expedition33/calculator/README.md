@@ -7,6 +7,31 @@ None of this would be possible without the incredible work of [JohnnyDamajer, wh
 
 Using their data, I built a custom calculator that models the various branching conditions, bonus layers, and interactions for each character’s skills. 
 
+## Table of Contents
+
+- [What It Does](#what-it-does)
+- [Data Sources](#data-sources)
+  - [Skill data](#skill-data)
+  - [Data cleaning](#data-cleaning)
+  - [Default attack values](#default-attack-values)
+  - [Picto and weapon sources](#picto-and-weapon-sources)
+- [Code Layout](#code-layout)
+- [Calculation Flow](#calculation-flow)
+- [Character Logic](#character-logic)
+  - [Gustave](#gustave)
+  - [Lune](#lune)
+  - [Maelle](#maelle)
+  - [Monoco](#monoco)
+  - [Sciel](#sciel)
+  - [Verso](#verso)
+- [Affinity, Pictos, and Weapons](#affinity-pictos-and-weapons)
+  - [Enemy affinity](#enemy-affinity)
+  - [Pictos](#pictos)
+  - [Weapons](#weapons)
+- [Summary Table vs Result Card](#summary-table-vs-result-card)
+- [Known Modeling Limits](#known-modeling-limits)
+- [Contact](#contact)
+
 ## What It Does
 
 The calculator helps answer complex questions like:
