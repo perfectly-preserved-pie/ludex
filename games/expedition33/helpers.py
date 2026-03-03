@@ -31,7 +31,7 @@ def build_title_card(title: str, subtitle: str = "For those who come after.") ->
                     "margin-left": "0px",
                 },
             ),
-        html.A("GitHub", href="https://github.com/perfectly-preserved-pie/ludex/tree/main/games/expedition33", target="_blank"),
+        html.A("GitHub", href="https://github.com/perfectly-preserved-pie/ludex/tree/main/games/expedition33/calculator", target="_blank"),
         ],
         body=True,
     )

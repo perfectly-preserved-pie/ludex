@@ -1,5 +1,5 @@
 # Expedition 33 Skill Damage Calculator
-__For those who come after.__
+_For those who come after._
 
 I made this calculator to help myself and others understand the complex damage formulas in Expedition 33. 
 
@@ -34,28 +34,28 @@ The result card shows the final damage estimate, the applied multiplier, the sce
 
 ### Skill data
 
-The skill rows come from the CSV files in [assets/expedition33/clair_skill_damage](/home/straying/expedition33/assets/expedition33/clair_skill_damage):
+The skill rows come from the CSV files in [assets/expedition33/clair_skill_damage](../../../assets/expedition33/clair_skill_damage):
 
-- [gustave.csv](/home/straying/expedition33/assets/expedition33/clair_skill_damage/gustave.csv)
-- [lune.csv](/home/straying/expedition33/assets/expedition33/clair_skill_damage/lune.csv)
-- [maelle.csv](/home/straying/expedition33/assets/expedition33/clair_skill_damage/maelle.csv)
-- [monoco.csv](/home/straying/expedition33/assets/expedition33/clair_skill_damage/monoco.csv)
-- [sciel.csv](/home/straying/expedition33/assets/expedition33/clair_skill_damage/sciel.csv)
-- [verso.csv](/home/straying/expedition33/assets/expedition33/clair_skill_damage/verso.csv)
+- [gustave.csv](../../../assets/expedition33/clair_skill_damage/gustave.csv)
+- [lune.csv](../../../assets/expedition33/clair_skill_damage/lune.csv)
+- [maelle.csv](../../../assets/expedition33/clair_skill_damage/maelle.csv)
+- [monoco.csv](../../../assets/expedition33/clair_skill_damage/monoco.csv)
+- [sciel.csv](../../../assets/expedition33/clair_skill_damage/sciel.csv)
+- [verso.csv](../../../assets/expedition33/clair_skill_damage/verso.csv)
 
-Those files are credited to JohnnyDamajer’s spreadsheet in [skill_damage.py](/home/straying/expedition33/games/expedition33/skill_damage.py). 
+Those files are credited to JohnnyDamajer’s spreadsheet in [skill_damage.py](../skill_damage.py). 
 
 I did a little work to integrate some of the character skill damage scaling data from ErikLeb & Blueye95’s spreadsheet as well.
 
 ### Data cleaning
 
-[helpers.py](/home/straying/expedition33/games/expedition33/helpers.py) normalizes spreadsheet exports before they are displayed or consumed:
+[helpers.py](../helpers.py) normalizes spreadsheet exports before they are displayed or consumed:
 
 - Empty header names are replaced with stable `Extra N` names.
 - Fully empty columns and rows are dropped.
 - Known junk columns such as `Extra*`, `Test*`, `Base Attack`, `T2`, and `T3` are removed.
 
-[core.py](/home/straying/expedition33/games/expedition33/calculator/core.py) then loads the per-character CSVs into `CALCULATOR_DATA`, filters out empty and tier-list rows, and builds skill lookups by name.
+[core.py](./core.py) then loads the per-character CSVs into `CALCULATOR_DATA`, filters out empty and tier-list rows, and builds skill lookups by name.
 
 ### Default attack values
 
@@ -71,8 +71,8 @@ If none are present, it falls back to `1000`.
 
 Picto and weapon bonuses are not loaded from the CSV exports. They are modeled directly in code:
 
-- [pictos.py](/home/straying/expedition33/games/expedition33/calculator/pictos.py)
-- [weapons.py](/home/straying/expedition33/games/expedition33/calculator/weapons.py)
+- [pictos.py](./pictos.py)
+- [weapons.py](./weapons.py)
 
 These files act as the current source of truth for bonus definitions, conditions, unlock levels, and multiplicative factors.
 
@@ -80,16 +80,16 @@ Pictos data provided by ErikLeb & Blueye95.
 
 ## Code Layout
 
-- [core.py](/home/straying/expedition33/games/expedition33/calculator/core.py): shared parsing, CSV loading, affinity handling, breakpoint extraction, and general helpers
-- [logic.py](/home/straying/expedition33/games/expedition33/calculator/logic.py): character-specific multiplier logic plus Picto/weapon bonus application
-- [callbacks.py](/home/straying/expedition33/games/expedition33/calculator/callbacks.py): Dash callback layer that gathers UI state and rebuilds the result panels
-- [layout.py](/home/straying/expedition33/games/expedition33/calculator/layout.py): calculator UI and result rendering
-- [pictos.py](/home/straying/expedition33/games/expedition33/calculator/pictos.py): Picto definitions and evaluation
-- [weapons.py](/home/straying/expedition33/games/expedition33/calculator/weapons.py): weapon passive definitions and evaluation
+- [core.py](./core.py): shared parsing, CSV loading, affinity handling, breakpoint extraction, and general helpers
+- [logic.py](./logic.py): character-specific multiplier logic plus Picto/weapon bonus application
+- [callbacks.py](./callbacks.py): Dash callback layer that gathers UI state and rebuilds the result panels
+- [layout.py](./layout.py): calculator UI and result rendering
+- [pictos.py](./pictos.py): Picto definitions and evaluation
+- [weapons.py](./weapons.py): weapon passive definitions and evaluation
 
 ## Calculation Flow
 
-The main calculation path lives in the large result callback in [callbacks.py](/home/straying/expedition33/games/expedition33/calculator/callbacks.py).
+The main calculation path lives in the large result callback in [callbacks.py](./callbacks.py).
 
 The flow is:
 
@@ -114,7 +114,7 @@ Not every skill uses every layer. Utility skills can intentionally return no dir
 
 ## Character Logic
 
-Each character has a dedicated calculator in [logic.py](/home/straying/expedition33/games/expedition33/calculator/logic.py).
+Each character has a dedicated calculator in [logic.py](./logic.py).
 
 ### Gustave
 
@@ -187,7 +187,7 @@ Some weapons can suppress Verso’s normal rank bonus. That suppression is passe
 
 ### Enemy affinity
 
-[core.py](/home/straying/expedition33/games/expedition33/calculator/core.py) applies affinity only to elemental skills. Non-elemental and physical skills ignore the affinity selector.
+[core.py](./core.py) applies affinity only to elemental skills. Non-elemental and physical skills ignore the affinity selector.
 
 The supported factors are:
 
@@ -197,7 +197,7 @@ The supported factors are:
 
 ### Pictos
 
-[pictos.py](/home/straying/expedition33/games/expedition33/calculator/pictos.py) defines each supported Picto as:
+[pictos.py](./pictos.py) defines each supported Picto as:
 
 - always active
 - boolean-gated
@@ -213,7 +213,7 @@ The supported factors are:
 
 ### Weapons
 
-[weapons.py](/home/straying/expedition33/games/expedition33/calculator/weapons.py) works the same way for supported weapon passives.
+[weapons.py](./weapons.py) works the same way for supported weapon passives.
 
 Each effect can be:
 
@@ -254,4 +254,4 @@ Current examples in the code include:
 ## Contact
 If you have questions, find a bug, or want to suggest improvements, please reach out! The best way to contact me is via email at xxxxxxxxxx. Alternatively, submit a GitHub issue or open a pull request.
 
-__Tomorrow comes.__
+_Tomorrow comes._
