@@ -1,8 +1,6 @@
 # Ludex
 Latin "ludus" (game) + dex (index)
 
-This is a simple home page and collection of utilities for whatever game I'm currently obsessed with, built with Dash. I wanted to have a collection of interactive tools that help me understand game mechanics and make informed decisions, without having to dig through spreadsheets or wiki pages. 
-
 I made a Dash AG Grid enemy database for Xenosaga a few years ago and found it really fun to build and actually super useful, so I decided to expand that concept into a more general project that can host tools for multiple games.
 
 ## What Ludex Includes
