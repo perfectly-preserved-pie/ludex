@@ -72,16 +72,57 @@ def home_layout() -> dbc.Container:
             dcc.Location(id="url"),
             dbc.Row(
                 dbc.Col(
-                    dmc.Card(
-                        dbc.CardBody(
-                            [
-                                html.H1("Ludex", className="mb-2"),
-                                html.P(
-                                    html.Em('Latin "ludus" (game) + dex (index)'),
-                                    className="mb-0",
-                                ),
-                            ]
-                        ),
+                    dbc.Card(
+                        [
+                            html.H1("Ludex", className="card-title mb-2"),
+                            html.I('Latin "ludus" (game) + dex (index)', className="d-block mb-2"),
+                            html.P(
+                                "A small index of game tools and reference pages.",
+                                className="mb-3",
+                            ),
+                            html.Div(
+                                [
+                                    html.Span(
+                                        [
+                                            DashIconify(icon="octicon:mark-github-16"),
+                                            html.A(
+                                                "GitHub",
+                                                href="https://github.com/perfectly-preserved-pie/ludex/tree/main",
+                                                target="_blank",
+                                            ),
+                                        ],
+                                        style={
+                                            "display": "inline-flex",
+                                            "alignItems": "center",
+                                            "gap": "5px",
+                                        },
+                                    ),
+                                    html.Span(
+                                        [
+                                            DashIconify(icon="streamline-color:send-email"),
+                                            html.A(
+                                                "hey@ludex.games",
+                                                href="mailto:hey@ludex.games",
+                                                target="_blank",
+                                            ),
+                                        ],
+                                        style={
+                                            "display": "inline-flex",
+                                            "alignItems": "center",
+                                            "gap": "5px",
+                                        },
+                                    ),
+                                ],
+                                style={
+                                    "display": "flex",
+                                    "alignItems": "center",
+                                    "columnGap": "15px",
+                                    "rowGap": "8px",
+                                    "flexWrap": "wrap",
+                                },
+                            ),
+                        ],
+                        body=True,
                         id="title-card",
                     ),
                     width=12,
