@@ -160,35 +160,34 @@ app.layout = dmc.MantineProvider(
     dbc.Container(
         [
             dbc.Row(
-                [
-                    dbc.Col(
-                        dcc.Link(
-                            dbc.Button("Home", color="secondary", outline=True, className="py-1"),
-                            href="/",
-                            refresh=False,
-                        ),
-                        width="auto",
-                        className="py-3",
-                    ),
-                    dbc.Col(
-                        dmc.ColorSchemeToggle(
-                            id="theme-toggle",
-                            lightIcon=DashIconify(
-                                icon="radix-icons:sun",
-                                width=15,
-                                color="var(--mantine-color-yellow-8)",
+                dbc.Col(
+                    html.Div(
+                        [
+                            dcc.Link(
+                                dbc.Button("Home", color="secondary", outline=True, className="py-1"),
+                                href="/",
+                                refresh=False,
                             ),
-                            darkIcon=DashIconify(
-                                icon="radix-icons:moon",
-                                width=15,
-                                color="var(--mantine-color-yellow-6)",
+                            dmc.ColorSchemeToggle(
+                                id="theme-toggle",
+                                lightIcon=DashIconify(
+                                    icon="radix-icons:sun",
+                                    width=15,
+                                    color="var(--mantine-color-yellow-8)",
+                                ),
+                                darkIcon=DashIconify(
+                                    icon="radix-icons:moon",
+                                    width=15,
+                                    color="var(--mantine-color-yellow-6)",
+                                ),
+                                size="lg",
                             ),
-                            size="lg",
-                        ),
-                        width="auto",
-                        className="ms-auto d-flex align-items-center py-3",
+                        ],
+                        className="d-flex align-items-center gap-2",
                     ),
-                ]
+                    width=12,
+                    className="py-3",
+                )
             ),
             dash.page_container,
         ],
