@@ -24,14 +24,47 @@ def build_title_card(title: str, subtitle: str = "For those who come after.") ->
             html.H3(title, className="card-title"),
             html.I(subtitle, style={"marginBottom": "10px"}),
             html.Br(),
-            html.I(
-                children=[DashIconify(icon="octicon:mark-github-16")],
+            html.Div(
+                [
+                    html.Span(
+                        [
+                            DashIconify(icon="octicon:mark-github-16"),
+                            html.A(
+                                "GitHub",
+                                href="https://github.com/perfectly-preserved-pie/ludex/tree/main/games/expedition33/calculator",
+                                target="_blank",
+                            ),
+                        ],
+                        style={
+                            "display": "inline-flex",
+                            "alignItems": "center",
+                            "gap": "5px",
+                        },
+                    ),
+                    html.Span(
+                        [
+                            DashIconify(icon="streamline-color:send-email"),
+                            html.A(
+                                "hey@ludex.games",
+                                href="mailto:hey@ludex.games",
+                                target="_blank",
+                            ),
+                        ],
+                        style={
+                            "display": "inline-flex",
+                            "alignItems": "center",
+                            "gap": "5px",
+                        },
+                    ),
+                ],
                 style={
-                    "margin-right": "5px",
-                    "margin-left": "0px",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "columnGap": "15px",
+                    "rowGap": "8px",
+                    "flexWrap": "wrap",
                 },
             ),
-        html.A("GitHub", href="https://github.com/perfectly-preserved-pie/ludex/tree/main/games/expedition33/calculator", target="_blank"),
         ],
         body=True,
     )

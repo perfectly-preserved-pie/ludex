@@ -53,14 +53,47 @@ title_card = dbc.Card(
             "Clicking on anywhere on a row will display the selected enemy's stats in a popup.",
             style={"margin-bottom": "0px"},
         ),
-        html.I(
-            children=[DashIconify(icon="octicon:mark-github-16")],
+        html.Div(
+            [
+                html.Span(
+                    [
+                        DashIconify(icon="octicon:mark-github-16"),
+                        html.A(
+                            "GitHub",
+                            href="https://github.com/perfectly-preserved-pie/ludex/tree/main/games/xenosaga",
+                            target="_blank",
+                        ),
+                    ],
+                    style={
+                        "display": "inline-flex",
+                        "alignItems": "center",
+                        "gap": "5px",
+                    },
+                ),
+                html.Span(
+                    [
+                        DashIconify(icon="streamline-color:send-email"),
+                        html.A(
+                            "hey@ludex.games",
+                            href="mailto:hey@ludex.games",
+                            target="_blank",
+                        ),
+                    ],
+                    style={
+                        "display": "inline-flex",
+                        "alignItems": "center",
+                        "gap": "5px",
+                    },
+                ),
+            ],
             style={
-                "margin-right": "5px",
-                "margin-left": "0px",
+                "display": "flex",
+                "alignItems": "center",
+                "columnGap": "15px",
+                "rowGap": "8px",
+                "flexWrap": "wrap",
             },
         ),
-        html.A("GitHub", href="https://github.com/perfectly-preserved-pie/ludex/tree/main/games/xenosaga", target="_blank"),
     ],
     body=True,
 )
