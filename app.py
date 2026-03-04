@@ -193,6 +193,7 @@ app.layout = dmc.MantineProvider(
             dash.page_container,
         ],
         fluid=True,
+        className="dbc dmc",
     )
 )
 

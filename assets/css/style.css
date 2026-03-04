@@ -24,3 +24,42 @@ body {
     background-color: var(--mantine-color-body);
     color: var(--mantine-color-text);
 }
+
+/* Keep Dash component tokens in sync with the active Bootstrap palette. */
+.dbc {
+    --Dash-Stroke-Strong: var(--bs-border-color);
+    --Dash-Fill-Interactive-Strong: var(--bs-primary);
+    --Dash-Fill-Inverse-Strong: var(--bs-body-bg);
+    --Dash-Text-Primary: var(--bs-body-color);
+    --Dash-Text-Strong: var(--bs-body-color);
+}
+
+html[data-mantine-color-scheme="dark"] .dbc {
+    --Dash-Stroke-Weak: rgba(255, 255, 255, 0.15);
+    --Dash-Fill-Weak: rgba(255, 255, 255, 0.06);
+    --Dash-Fill-Primary-Hover: rgba(255, 255, 255, 0.08);
+    --Dash-Fill-Primary-Active: rgba(255, 255, 255, 0.12);
+    --Dash-Fill-Disabled: rgba(255, 255, 255, 0.2);
+    --Dash-Text-Disabled: rgba(255, 255, 255, 0.3);
+    --Dash-Text-Weak: rgba(255, 255, 255, 0.3);
+}
+
+/* Match the DMC dark-mode helper styles from larentals. */
+.dmc {
+    --Dash-Stroke-Strong: var(--mantine-color-default-border);
+    --Dash-Stroke-Weak: var(--mantine-color-disabled);
+    --Dash-Fill-Interactive-Strong: var(--mantine-primary-color-filled);
+    --Dash-Fill-Inverse-Strong: var(--mantine-color-body);
+    --Dash-Text-Primary: var(--mantine-color-text);
+    --Dash-Text-Strong: var(--mantine-color-text);
+    --Dash-Text-Disabled: var(--mantine-color-dimmed);
+    --Dash-Text-Weak: var(--mantine-color-dimmed);
+}
+
+html[data-mantine-color-scheme="dark"] .dmc {
+    --Dash-Fill-Inverse-Strong: var(--mantine-color-dark-6);
+    --Dash-Fill-Weak: rgba(255, 255, 255, 0.06);
+    --Dash-Fill-Primary-Hover: rgba(255, 255, 255, 0.08);
+    --Dash-Fill-Primary-Active: rgba(255, 255, 255, 0.12);
+    --Dash-Fill-Disabled: rgba(255, 255, 255, 0.15);
+}
