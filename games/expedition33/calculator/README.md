@@ -108,7 +108,12 @@ Pictos data provided by ErikLeb & Blueye95.
 - [core.py](./core.py): shared parsing, CSV loading, affinity handling, breakpoint extraction, and general helpers
 - [logic.py](./logic.py): character-specific multiplier logic plus Picto/weapon bonus application
 - [callbacks.py](./callbacks.py): Dash callback layer that gathers UI state and rebuilds the result panels
-- [layout.py](./layout.py): calculator UI and result rendering
+- [layout.py](./layout.py): compatibility shim re-exporting the calculator UI entrypoint
+- [ui/page.py](./ui/page.py): top-level calculator page assembly
+- [ui/result_views.py](./ui/result_views.py): result card, summary table, and comparison rendering
+- [ui/setup_fields.py](./ui/setup_fields.py): shared setup inputs and stores
+- [ui/bonus_controls.py](./ui/bonus_controls.py): Picto and weapon bonus setup controls
+- [ui/character_controls.py](./ui/character_controls.py): per-character combat state controls
 - [pictos.py](./pictos.py): Picto definitions and evaluation
 - [weapons.py](./weapons.py): weapon passive definitions and evaluation
 

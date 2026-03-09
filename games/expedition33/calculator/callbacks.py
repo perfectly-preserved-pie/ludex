@@ -27,7 +27,7 @@ from games.expedition33.calculator.core import (
     ToggleInput,
     VISIBLE_STYLE,
 )
-from games.expedition33.calculator.layout import (
+from games.expedition33.calculator.ui.result_views import (
     build_comparison_overview,
     build_result_body,
     build_summary_body,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dash import register_page
 from games.expedition33.calculator import callbacks as _callbacks
-from games.expedition33.calculator.layout import layout
+from games.expedition33.calculator.ui.page import layout
 
 register_page(
     __name__,
