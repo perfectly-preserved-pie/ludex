@@ -1,6 +1,6 @@
 from __future__ import annotations
-import logging
 from dash import html, Input, Output, State, callback, no_update
+from loguru import logger
 from typing import Any, TypeAlias, TypedDict
 from games.expedition33.calculator.core import (
     AffinityDetails,
@@ -63,9 +63,6 @@ CalculatorResultPanels: TypeAlias = tuple[
     ComponentChildren,
     ComponentChildren,
 ]
-
-logger = logging.getLogger(__name__)
-
 
 class EvaluatedSkillView(TypedDict):
     """Fully evaluated calculator state for one selected skill."""
@@ -483,7 +480,7 @@ def import_save_file(
     except SaveImportError as exc:
         return None, str(exc), "danger", True, no_update
     except Exception as exc:
-        logger.exception("Unexpected failure while importing uploaded save", exc_info=exc)
+        logger.exception("Unexpected failure while importing uploaded save: {}", exc)
         return None, "Uploaded save could not be imported.", "danger", True, no_update
 
     available_characters = [

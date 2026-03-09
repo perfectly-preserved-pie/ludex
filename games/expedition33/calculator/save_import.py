@@ -3,7 +3,6 @@ from __future__ import annotations
 import base64
 import binascii
 import json
-import logging
 import os
 from pathlib import Path
 import platform
@@ -13,11 +12,11 @@ import subprocess
 from typing import Any, TypedDict
 import unicodedata
 
+from loguru import logger
+
 from games.expedition33.calculator.core import CALCULATOR_DATA, DEFAULT_CHARACTER
 from games.expedition33.calculator.pictos import PICTO_DEFINITIONS
 from games.expedition33.calculator.weapons import WEAPON_DEFINITIONS, normalize_weapon_level
-
-logger = logging.getLogger(__name__)
 
 
 class SaveImportError(RuntimeError):
@@ -230,17 +229,17 @@ def convert_save_bytes_to_json(save_bytes: bytes) -> dict[str, Any]:
             timeout=UESAVE_TIMEOUT_SECONDS,
         )
     except subprocess.TimeoutExpired as exc:
-        logger.warning("uesave timed out while parsing uploaded save", exc_info=exc)
+        logger.warning("uesave timed out while parsing uploaded save: {}", exc)
         raise SaveImportError("Uploaded save took too long to parse.") from exc
     if process.returncode != 0:
         error_text = process.stderr.decode("utf-8", errors="replace").strip()
-        logger.warning("uesave failed to parse uploaded save: %s", error_text or "<empty stderr>")
+        logger.warning("uesave failed to parse uploaded save: {}", error_text or "<empty stderr>")
         raise SaveImportError("Uploaded save could not be parsed.") from None
 
     try:
         return json.loads(process.stdout.decode("utf-8"))
     except json.JSONDecodeError as exc:
-        logger.warning("uesave returned invalid JSON while parsing uploaded save", exc_info=exc)
+        logger.warning("uesave returned invalid JSON while parsing uploaded save: {}", exc)
         raise SaveImportError("uesave returned invalid JSON for the uploaded save.") from exc
 
 
