@@ -1,9 +1,12 @@
 from __future__ import annotations
 from dash import Input, Output, callback
-from typing import Any
+from typing import Any, TypeAlias, TypedDict
 from games.expedition33.calculator.core import (
+    AffinityDetails,
     calculate_current_cost,
     CALCULATOR_DATA,
+    CalculationResult,
+    CalculatorRow,
     CalculatorState,
     CharacterStyles,
     clamp_int,
@@ -23,7 +26,11 @@ from games.expedition33.calculator.core import (
     ToggleInput,
     VISIBLE_STYLE,
 )
-from games.expedition33.calculator.layout import build_result_body, build_summary_body
+from games.expedition33.calculator.layout import (
+    build_comparison_overview,
+    build_result_body,
+    build_summary_body,
+)
 from games.expedition33.calculator.logic import (
     apply_weapon_bonus,
     apply_picto_bonus,
@@ -31,14 +38,40 @@ from games.expedition33.calculator.logic import (
     calculate_skill_result,
     resolve_picto_attack_type,
 )
-from games.expedition33.calculator.pictos import evaluate_pictos, required_picto_controls
+from games.expedition33.calculator.pictos import PictoSummary, evaluate_pictos, required_picto_controls
 from games.expedition33.calculator.weapons import (
+    WeaponSummary,
     evaluate_weapon,
     normalize_weapon_level,
     required_weapon_character_controls,
     required_weapon_controls,
     weapon_options_for,
 )
+
+SkillDropdownUpdate: TypeAlias = tuple[list[SkillOption], str, list[SkillOption], None, float]
+VisibleControlsUpdate: TypeAlias = tuple[Any, ...]
+CalculatorResultPanels: TypeAlias = tuple[
+    StyleRule,
+    ComponentChildren,
+    int,
+    ComponentChildren,
+    ComponentChildren,
+    StyleRule,
+    ComponentChildren,
+    ComponentChildren,
+]
+
+
+class EvaluatedSkillView(TypedDict):
+    """Fully evaluated calculator state for one selected skill."""
+
+    row: CalculatorRow
+    affinity: AffinityDetails
+    picto_summary: PictoSummary
+    weapon_summary: WeaponSummary
+    skill_result: CalculationResult
+    current_cost: str
+    total_bonus_factor: float
 
 
 def build_character_section_styles(active_character: str) -> tuple[list[str], CharacterStyles]:
@@ -72,6 +105,27 @@ def control_style(control_styles: ControlStyles, control: str) -> StyleRule:
     """
 
     return control_styles.get(control, HIDDEN_STYLE)
+
+
+def merge_control_styles(*style_sets: ControlStyles) -> ControlStyles:
+    """Merge multiple control-style maps, keeping any visible control visible.
+
+    Args:
+        *style_sets: One or more control-style mappings to combine.
+
+    Returns:
+        A merged style map where a control remains visible if any input mapping
+        marks it visible.
+    """
+
+    merged: ControlStyles = {}
+    for style_set in style_sets:
+        for control, style in style_set.items():
+            if style == VISIBLE_STYLE:
+                merged[control] = VISIBLE_STYLE
+            elif control not in merged:
+                merged[control] = HIDDEN_STYLE
+    return merged
 
 
 def empty_state_style(control_styles: ControlStyles, prefix: str) -> StyleRule:
@@ -350,18 +404,22 @@ def build_weapon_state(
 @callback(
     Output("exp33-calculator-skill", "options"),
     Output("exp33-calculator-skill", "value"),
+    Output("exp33-calculator-compare-skill", "options"),
+    Output("exp33-calculator-compare-skill", "value"),
     Output("exp33-calculator-attack", "value"),
     Input("exp33-calculator-character", "value"),
 )
-def update_skill_dropdown(character: str | None) -> tuple[list[SkillOption], str, float]:
+def update_skill_dropdown(character: str | None) -> SkillDropdownUpdate:
     """Refresh the skill dropdown and default attack when the character changes.
 
     Args:
         character: The selected calculator character id.
 
     Returns:
-        A tuple of ``(options, selected_skill, default_attack)`` for the newly
-        selected character.
+        A tuple of ``(primary_options, primary_skill, compare_options,
+        compare_skill, default_attack)`` for the newly selected character.
+        The compare skill resets to ``None`` so stale selections do not carry
+        across characters.
     """
 
     selected_character = character or DEFAULT_CHARACTER
@@ -370,7 +428,7 @@ def update_skill_dropdown(character: str | None) -> tuple[list[SkillOption], str
     if default_skill not in {option["value"] for option in options}:
         default_skill = options[0]["value"]
     attack = CALCULATOR_DATA[selected_character]["default_attack"]
-    return options, default_skill, attack
+    return options, default_skill, options, None, attack
 
 
 @callback(
@@ -442,32 +500,44 @@ def update_weapon_dropdown(character: str | None) -> tuple[list[SkillOption], No
     Output("exp33-calculator-control-verso-missing-health", "style"),
     Input("exp33-calculator-character", "value"),
     Input("exp33-calculator-skill", "value"),
+    Input("exp33-calculator-compare-skill", "value"),
     Input("exp33-calculator-weapon", "value"),
     Input("exp33-calculator-weapon-level", "value"),
 )
 def sync_visible_controls(
     character: str | None,
     skill: str | None,
+    compare_skill: str | None,
     weapon: str | None,
     weapon_level: str | None,
-) -> tuple[Any, ...]:
-    """Show only the setup controls relevant to the selected skill.
+) -> VisibleControlsUpdate:
+    """Show only the setup controls relevant to the selected skills.
 
     Args:
         character: The selected calculator character id.
         skill: The currently selected skill name.
+        compare_skill: The optional secondary skill used for comparison.
         weapon: The currently selected weapon name, if any.
         weapon_level: The selected weapon unlock level.
 
     Returns:
         A Dash callback tuple containing the active accordion item plus the
         visibility styles for every character setup section and control wrapper.
+        When a compare skill is active, controls required by either selected
+        skill stay visible.
     """
 
     active_character = character or DEFAULT_CHARACTER
+    available_skills = {option["value"] for option in skill_options_for(active_character)}
+    active_compare_skill = compare_skill if compare_skill in available_skills else None
     active_item, styles = build_character_section_styles(active_character)
-    row = get_row(active_character, skill)
-    control_styles = build_skill_control_styles(active_character, row)
+    primary_row = get_row(active_character, skill)
+    style_sets = [build_skill_control_styles(active_character, primary_row)]
+    if active_compare_skill:
+        compare_row = get_row(active_character, active_compare_skill)
+        style_sets.append(build_skill_control_styles(active_character, compare_row))
+
+    control_styles = merge_control_styles(*style_sets)
     for control in required_weapon_character_controls(active_character, weapon, weapon_level):
         control_styles[control] = VISIBLE_STYLE
 
@@ -631,10 +701,17 @@ def sync_visible_bonus_controls(
 
 
 @callback(
+    Output("exp33-calculator-compare-overview-card", "style"),
+    Output("exp33-calculator-compare-overview-body", "children"),
+    Output("exp33-calculator-primary-column", "lg"),
     Output("exp33-calculator-result-body", "children"),
     Output("exp33-calculator-summary-body", "children"),
+    Output("exp33-calculator-compare-column", "style"),
+    Output("exp33-calculator-compare-result-body", "children"),
+    Output("exp33-calculator-compare-summary-body", "children"),
     Input("exp33-calculator-character", "value"),
     Input("exp33-calculator-skill", "value"),
+    Input("exp33-calculator-compare-skill", "value"),
     Input("exp33-calculator-attack", "value"),
     Input("exp33-calculator-enemy-affinity", "value"),
     Input("exp33-calculator-weapon", "value"),
@@ -703,6 +780,7 @@ def sync_visible_bonus_controls(
 def update_calculator_result(
     character: str | None,
     skill: str | None,
+    compare_skill: str | None,
     attack: NumericInput,
     enemy_affinity: str | None,
     weapon: str | None,
@@ -767,12 +845,13 @@ def update_calculator_result(
     verso_stunned: ToggleInput,
     verso_speed_bonus: ToggleInput,
     verso_missing_health: NumericInput,
-) -> tuple[ComponentChildren, ComponentChildren]:
-    """Recalculate the selected skill and rebuild both calculator panels.
+) -> CalculatorResultPanels:
+    """Recalculate the selected skill and rebuild the calculator panels.
 
     Args:
         character: The selected calculator character id.
         skill: The currently selected skill name.
+        compare_skill: The optional secondary skill used for side-by-side comparison.
         attack: The raw attack power input.
         enemy_affinity: The selected enemy elemental affinity modifier.
         weapon: The selected weapon name.
@@ -839,14 +918,19 @@ def update_calculator_result(
         verso_missing_health: Verso's missing HP percentage for Berserk Slash.
 
     Returns:
-        A tuple containing the rebuilt result-card body and summary-card body.
+        A tuple containing:
+        ``(compare_overview_style, compare_overview_body, primary_width,
+        primary_result_body, primary_summary_body, compare_column_style,
+        compare_result_body, compare_summary_body)``.
+        When no compare skill is selected, the compare overview and compare
+        column outputs are hidden and their bodies are empty.
     """
 
     selected_character = character or DEFAULT_CHARACTER
-    row = get_row(selected_character, skill)
+    available_skills = {option["value"] for option in skill_options_for(selected_character)}
+    active_compare_skill = compare_skill if compare_skill in available_skills else None
     attack_value = parse_number(attack) or CALCULATOR_DATA[selected_character]["default_attack"]
-    affinity = resolve_affinity(row, normalize_affinity(enemy_affinity))
-    resolved_picto_attack_type = resolve_picto_attack_type(row, picto_attack_type)
+    normalized_enemy_affinity = normalize_affinity(enemy_affinity)
 
     states = build_calculator_states(
         gustave_charges,
@@ -882,57 +966,146 @@ def update_calculator_result(
         verso_speed_bonus,
         verso_missing_health,
     )
-    picto_state = build_picto_state(
-        resolved_picto_attack_type,
-        picto_below_10_health,
-        picto_target_burning,
-        picto_target_stunned,
-        picto_exhausted,
-        picto_full_health,
-        picto_unhit,
-        picto_inverted,
-        picto_consume_ap,
-        picto_shield_points,
-        picto_fighting_alone,
-        picto_all_allies_alive,
-        picto_status_effects,
-        picto_dodge_stacks,
-        picto_parry_stacks,
-        picto_warming_up_stacks,
-        picto_first_hit,
+
+    def evaluate_skill_view(selected_skill: str | None) -> EvaluatedSkillView:
+        """Evaluate one selected skill against the shared calculator state.
+
+        Args:
+            selected_skill: The skill to resolve for the active character.
+
+        Returns:
+            A fully evaluated payload containing the resolved row, affinity,
+            summaries, result, current AP cost, and total multiplicative bonus.
+        """
+
+        row = get_row(selected_character, selected_skill)
+        affinity = resolve_affinity(row, normalized_enemy_affinity)
+        resolved_picto_attack_type = resolve_picto_attack_type(row, picto_attack_type)
+        picto_state = build_picto_state(
+            resolved_picto_attack_type,
+            picto_below_10_health,
+            picto_target_burning,
+            picto_target_stunned,
+            picto_exhausted,
+            picto_full_health,
+            picto_unhit,
+            picto_inverted,
+            picto_consume_ap,
+            picto_shield_points,
+            picto_fighting_alone,
+            picto_all_allies_alive,
+            picto_status_effects,
+            picto_dodge_stacks,
+            picto_parry_stacks,
+            picto_warming_up_stacks,
+            picto_first_hit,
+        )
+        weapon_state = build_weapon_state(
+            resolved_picto_attack_type,
+            picto_shield_points,
+            weapon_unhit_turns,
+            weapon_stain_consume_stacks,
+            weapon_light_stains,
+            weapon_dark_stains,
+            weapon_self_burn_stacks,
+            sciel_foretell,
+            sciel_twilight,
+            weapon_moon_charges,
+            weapon_cursed,
+            weapon_ap_consumed,
+            weapon_critical_hit,
+            weapon_monoco_mask_type,
+            verso_rank,
+        )
+
+        picto_summary = evaluate_pictos(pictos, picto_state)
+        weapon_summary = evaluate_weapon(selected_character, weapon, weapon_level, row, weapon_state)
+        skill_result = calculate_skill_result(
+            selected_character,
+            row,
+            states[selected_character],
+            weapon_summary["suppress_verso_rank_bonus"],
+        )
+        skill_result = apply_weapon_bonus(skill_result, weapon_summary)
+        skill_result = apply_picto_bonus(skill_result, picto_summary)
+        current_cost = calculate_current_cost(selected_character, row, states[selected_character])
+
+        return {
+            "row": row,
+            "affinity": affinity,
+            "picto_summary": picto_summary,
+            "weapon_summary": weapon_summary,
+            "skill_result": skill_result,
+            "current_cost": current_cost,
+            "total_bonus_factor": picto_summary["total_factor"] * weapon_summary["total_factor"],
+        }
+
+    primary_view = evaluate_skill_view(skill)
+    primary_result_body = build_result_body(
+        selected_character,
+        primary_view["row"],
+        attack_value,
+        primary_view["current_cost"],
+        primary_view["skill_result"],
+        primary_view["picto_summary"],
+        primary_view["weapon_summary"],
+        primary_view["affinity"],
     )
-    weapon_state = build_weapon_state(
-        resolved_picto_attack_type,
-        picto_shield_points,
-        weapon_unhit_turns,
-        weapon_stain_consume_stacks,
-        weapon_light_stains,
-        weapon_dark_stains,
-        weapon_self_burn_stacks,
-        sciel_foretell,
-        sciel_twilight,
-        weapon_moon_charges,
-        weapon_cursed,
-        weapon_ap_consumed,
-        weapon_critical_hit,
-        weapon_monoco_mask_type,
-        verso_rank,
+    primary_summary_body = build_summary_body(
+        primary_view["row"],
+        attack_value,
+        primary_view["total_bonus_factor"],
+        primary_view["affinity"],
     )
 
-    picto_summary = evaluate_pictos(pictos, picto_state)
-    weapon_summary = evaluate_weapon(selected_character, weapon, weapon_level, row, weapon_state)
-    skill_result = calculate_skill_result(
+    if not active_compare_skill:
+        return (
+            HIDDEN_STYLE,
+            [],
+            12,
+            primary_result_body,
+            primary_summary_body,
+            HIDDEN_STYLE,
+            [],
+            [],
+        )
+
+    compare_view = evaluate_skill_view(active_compare_skill)
+    compare_result_body = build_result_body(
         selected_character,
-        row,
-        states[selected_character],
-        weapon_summary["suppress_verso_rank_bonus"],
+        compare_view["row"],
+        attack_value,
+        compare_view["current_cost"],
+        compare_view["skill_result"],
+        compare_view["picto_summary"],
+        compare_view["weapon_summary"],
+        compare_view["affinity"],
     )
-    skill_result = apply_weapon_bonus(skill_result, weapon_summary)
-    skill_result = apply_picto_bonus(skill_result, picto_summary)
-    current_cost = calculate_current_cost(selected_character, row, states[selected_character])
-    total_bonus_factor = picto_summary["total_factor"] * weapon_summary["total_factor"]
+    compare_summary_body = build_summary_body(
+        compare_view["row"],
+        attack_value,
+        compare_view["total_bonus_factor"],
+        compare_view["affinity"],
+    )
 
     return (
-        build_result_body(selected_character, row, attack_value, current_cost, skill_result, picto_summary, weapon_summary, affinity),
-        build_summary_body(row, attack_value, total_bonus_factor, affinity),
+        VISIBLE_STYLE,
+        build_comparison_overview(
+            primary_view["row"],
+            attack_value,
+            primary_view["current_cost"],
+            primary_view["skill_result"],
+            primary_view["affinity"],
+            compare_view["row"],
+            attack_value,
+            compare_view["current_cost"],
+            compare_view["skill_result"],
+            compare_view["affinity"],
+        ),
+        6,
+        primary_result_body,
+        primary_summary_body,
+        VISIBLE_STYLE,
+        compare_result_body,
+        compare_summary_body,
     )

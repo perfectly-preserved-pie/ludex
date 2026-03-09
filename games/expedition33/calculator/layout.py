@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 from dash import dcc, html
 from typing import Any
 import dash_bootstrap_components as dbc
@@ -18,6 +19,7 @@ from games.expedition33.calculator.core import (
     DEFAULT_SKILLS,
     format_multiplier,
     HIDDEN_STYLE,
+    parse_number,
     skill_element,
     skill_options_for,
 )
@@ -342,6 +344,236 @@ def build_summary_body(
     ]
 
 
+def build_compare_metric_tile(label: str, value: str, hint: str) -> html.Div:
+    """Build a compact comparison metric tile."""
+
+    return html.Div(
+        [
+            html.Div(label, className="skill-compare-metric-label"),
+            html.Div(value, className="skill-compare-metric-value"),
+            html.Div(hint, className="skill-compare-metric-hint"),
+        ],
+        className="skill-compare-metric-tile",
+    )
+
+
+def build_result_metrics(
+    row: CalculatorRow,
+    attack: float | None,
+    current_cost: str,
+    skill_result: CalculationResult,
+    affinity: AffinityDetails,
+) -> dict[str, Any]:
+    """Derive high-level metrics used by the calculator comparison overview."""
+
+    multiplier = skill_result.get("multiplier")
+    effective_multiplier = None
+    if isinstance(multiplier, (int, float)):
+        effective_multiplier = round(multiplier * affinity["factor"], 2)
+
+    damage = calculate_damage(attack, effective_multiplier)
+    cost_value = parse_number(current_cost)
+    damage_per_ap = None
+    if damage is not None and cost_value not in (None, 0):
+        damage_per_ap = round(damage / cost_value, 2)
+
+    affinity_label = (
+        {
+            "neutral": "Neutral",
+            "weak": "Weakness",
+            "resist": "Resistance",
+        }[affinity["affinity"]]
+        if affinity["applies"]
+        else "No affinity modifier"
+    )
+
+    return {
+        "skill": clean_text(row.get("Skill")),
+        "damage": damage,
+        "effective_multiplier": effective_multiplier,
+        "cost_label": current_cost or "-",
+        "cost_value": cost_value,
+        "damage_per_ap": damage_per_ap,
+        "meta": " | ".join(
+            part
+            for part in (
+                skill_element(row) or "None",
+                affinity_label,
+            )
+            if part
+        ),
+        "scenario": clean_text(skill_result.get("scenario")),
+        "source": clean_text(skill_result.get("source")),
+    }
+
+
+def build_compare_summary_card(slot_label: str, metrics: dict[str, Any], accent_class: str) -> dbc.Card:
+    """Build one side of the calculator comparison overview."""
+
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div(slot_label, className="skill-compare-slot-label"),
+                html.H4(metrics["skill"], className="mb-1"),
+                html.P(metrics["meta"], className="skill-compare-meta mb-3"),
+                html.Div(
+                    [
+                        build_compare_metric_tile(
+                            "Estimated Damage",
+                            format_value(metrics["damage"]),
+                            "Current setup and affinity applied",
+                        ),
+                        build_compare_metric_tile(
+                            "Applied Multiplier",
+                            format_multiplier(metrics["effective_multiplier"]),
+                            "After Picto, weapon, and affinity effects",
+                        ),
+                        build_compare_metric_tile(
+                            "AP Cost",
+                            metrics["cost_label"],
+                            "State-adjusted current cost",
+                        ),
+                        build_compare_metric_tile(
+                            "Damage / AP",
+                            format_value(metrics["damage_per_ap"]),
+                            "Estimated efficiency per AP",
+                        ),
+                    ],
+                    className="skill-compare-metrics",
+                ),
+                html.Div(
+                    [
+                        html.Div("Scenario", className="skill-compare-detail-label"),
+                        html.Div(metrics["scenario"] or "Base value", className="skill-compare-detail-value"),
+                        html.Div(
+                            f"Source: {metrics['source']}" if metrics["source"] else "Source unavailable",
+                            className="skill-compare-metric-hint",
+                        ),
+                    ],
+                    className="skill-compare-detail-block",
+                ),
+            ]
+        ),
+        className=f"h-100 skill-compare-card {accent_class}",
+    )
+
+
+def build_compare_advantage_item(
+    label: str,
+    left_label: str,
+    left_value: float | None,
+    right_label: str,
+    right_value: float | None,
+    value_formatter,
+    higher_is_better: bool = True,
+) -> html.Div:
+    """Describe which side leads for a single calculated metric."""
+
+    if left_value is None or right_value is None:
+        detail = "Not comparable"
+    elif math.isclose(left_value, right_value):
+        detail = "Tie"
+    else:
+        left_wins = left_value > right_value if higher_is_better else left_value < right_value
+        winner = left_label if left_wins else right_label
+        detail = f"{winner} by {value_formatter(abs(left_value - right_value))}"
+
+    return html.Div(
+        [
+            html.Div(label, className="skill-compare-advantage-label"),
+            html.Div(detail, className="skill-compare-advantage-value"),
+        ],
+        className="skill-compare-advantage-item",
+    )
+
+
+def build_comparison_overview(
+    left_row: CalculatorRow,
+    left_attack: float | None,
+    left_cost: str,
+    left_result: CalculationResult,
+    left_affinity: AffinityDetails,
+    right_row: CalculatorRow,
+    right_attack: float | None,
+    right_cost: str,
+    right_result: CalculationResult,
+    right_affinity: AffinityDetails,
+) -> html.Div:
+    """Build the calculator comparison overview shown above the result cards."""
+
+    left_metrics = build_result_metrics(left_row, left_attack, left_cost, left_result, left_affinity)
+    right_metrics = build_result_metrics(right_row, right_attack, right_cost, right_result, right_affinity)
+
+    return html.Div(
+        dbc.Row(
+            [
+                dbc.Col(
+                    build_compare_summary_card("Skill A", left_metrics, "skill-compare-card-a"),
+                    lg=4,
+                    className="mb-3",
+                ),
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.Div("Comparison", className="skill-compare-slot-label"),
+                                html.H4("Same setup, side by side", className="mb-3"),
+                                html.Div(
+                                    [
+                                        build_compare_advantage_item(
+                                            "Estimated damage",
+                                            left_metrics["skill"],
+                                            left_metrics["damage"],
+                                            right_metrics["skill"],
+                                            right_metrics["damage"],
+                                            format_value,
+                                        ),
+                                        build_compare_advantage_item(
+                                            "Applied multiplier",
+                                            left_metrics["skill"],
+                                            left_metrics["effective_multiplier"],
+                                            right_metrics["skill"],
+                                            right_metrics["effective_multiplier"],
+                                            format_multiplier,
+                                        ),
+                                        build_compare_advantage_item(
+                                            "AP cost",
+                                            left_metrics["skill"],
+                                            left_metrics["cost_value"],
+                                            right_metrics["skill"],
+                                            right_metrics["cost_value"],
+                                            format_value,
+                                            higher_is_better=False,
+                                        ),
+                                        build_compare_advantage_item(
+                                            "Damage / AP",
+                                            left_metrics["skill"],
+                                            left_metrics["damage_per_ap"],
+                                            right_metrics["skill"],
+                                            right_metrics["damage_per_ap"],
+                                            format_value,
+                                        ),
+                                    ],
+                                    className="skill-compare-advantage-list",
+                                ),
+                            ]
+                        ),
+                        className="h-100 skill-compare-card skill-compare-card-delta",
+                    ),
+                    lg=4,
+                    className="mb-3",
+                ),
+                dbc.Col(
+                    build_compare_summary_card("Skill B", right_metrics, "skill-compare-card-b"),
+                    lg=4,
+                    className="mb-3",
+                ),
+            ],
+            className="g-3",
+        )
+    )
+
+
 def build_empty_control_notice(character: str) -> html.Div:
     """Build the placeholder shown when a skill has no extra inputs.
 
@@ -378,6 +610,14 @@ skill_dropdown = dcc.Dropdown(
     options=skill_options_for(DEFAULT_CHARACTER),
     value=DEFAULT_SKILLS[DEFAULT_CHARACTER],
     clearable=False,
+)
+
+compare_skill_dropdown = dcc.Dropdown(
+    id="exp33-calculator-compare-skill",
+    options=skill_options_for(DEFAULT_CHARACTER),
+    value=None,
+    clearable=True,
+    placeholder="Optional second skill for comparison",
 )
 
 attack_input = dmc.NumberInput(
@@ -1085,6 +1325,16 @@ layout = dbc.Container(
                                                 skill_dropdown,
                                             ]
                                         ),
+                                        html.Div(
+                                            [
+                                                html.Label("Compare Against", className="form-label"),
+                                                compare_skill_dropdown,
+                                                html.Div(
+                                                    "Uses the same character, setup, weapon, Pictos, and enemy affinity.",
+                                                    className="form-text",
+                                                ),
+                                            ]
+                                        ),
                                         attack_input,
                                         enemy_affinity_select,
                                         weapon_select,
@@ -1105,16 +1355,58 @@ layout = dbc.Container(
                     [
                         dbc.Card(
                             [
-                                dbc.CardHeader("Result"),
-                                dbc.CardBody(id="exp33-calculator-result-body"),
+                                dbc.CardHeader("Comparison"),
+                                dbc.CardBody(id="exp33-calculator-compare-overview-body"),
                             ],
-                            className="mb-3",
+                            id="exp33-calculator-compare-overview-card",
+                            className="mb-3 skill-compare-shell",
+                            style=HIDDEN_STYLE,
                         ),
-                        dbc.Card(
+                        dbc.Row(
                             [
-                                dbc.CardHeader("Sheet Summary"),
-                                dbc.CardBody(id="exp33-calculator-summary-body"),
-                            ]
+                                dbc.Col(
+                                    [
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("Result"),
+                                                dbc.CardBody(id="exp33-calculator-result-body"),
+                                            ],
+                                            className="mb-3",
+                                        ),
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("Sheet Summary"),
+                                                dbc.CardBody(id="exp33-calculator-summary-body"),
+                                            ]
+                                        ),
+                                    ],
+                                    id="exp33-calculator-primary-column",
+                                    lg=12,
+                                    className="mb-4",
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("Compare Result"),
+                                                dbc.CardBody(id="exp33-calculator-compare-result-body"),
+                                            ],
+                                            className="mb-3",
+                                        ),
+                                        dbc.Card(
+                                            [
+                                                dbc.CardHeader("Compare Sheet Summary"),
+                                                dbc.CardBody(id="exp33-calculator-compare-summary-body"),
+                                            ]
+                                        ),
+                                    ],
+                                    id="exp33-calculator-compare-column",
+                                    lg=6,
+                                    className="mb-4",
+                                    style=HIDDEN_STYLE,
+                                ),
+                            ],
+                            className="g-4",
                         ),
                     ],
                     lg=7,
