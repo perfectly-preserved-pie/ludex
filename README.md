@@ -5,6 +5,11 @@ Latin "ludus" (game) + dex (index)
 
 I made a Dash AG Grid enemy database for Xenosaga a few years ago and found it really fun to build and actually super useful, so I decided to expand that concept into a more general project that can host tools for multiple games.
 
+## AI Disclaimer
+With the exception of most of the Xenosaga Enemy Database, which was built years ago, the rest of the code in this repository was generated with the help of AI. I used Codex.
+
+I do my best to review and test all AI-generated code, but there may be bugs. If you find any, please open an issue or submit a PR.
+
 ## What Ludex Includes
 
 Current pages in this repository:
