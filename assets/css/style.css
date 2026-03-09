@@ -63,3 +63,128 @@ html[data-mantine-color-scheme="dark"] .dmc {
     --Dash-Fill-Primary-Active: rgba(255, 255, 255, 0.12);
     --Dash-Fill-Disabled: rgba(255, 255, 255, 0.15);
 }
+
+.skill-compare-shell {
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, var(--bs-border-color));
+    box-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.45);
+}
+
+.skill-compare-card {
+    border: 1px solid var(--bs-border-color);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--bs-primary) 6%, transparent), transparent 90px),
+        var(--bs-card-bg);
+}
+
+.skill-compare-card-a {
+    border-top: 4px solid #1d6fd6;
+}
+
+.skill-compare-card-b {
+    border-top: 4px solid #d2642a;
+}
+
+.skill-compare-card-delta {
+    border-top: 4px solid color-mix(in srgb, var(--bs-primary) 55%, var(--bs-border-color));
+}
+
+.skill-compare-slot-label {
+    margin-bottom: 0.35rem;
+    color: var(--bs-secondary-color);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.skill-compare-meta {
+    color: var(--bs-secondary-color);
+}
+
+.skill-compare-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.skill-compare-metric-tile {
+    padding: 0.9rem 1rem;
+    border-radius: 0.85rem;
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 12%, var(--bs-border-color));
+    background: color-mix(in srgb, var(--bs-tertiary-bg) 75%, transparent);
+}
+
+.skill-compare-metric-label,
+.skill-compare-metric-hint,
+.skill-compare-detail-label,
+.skill-compare-advantage-label {
+    color: var(--bs-secondary-color);
+    font-size: 0.82rem;
+}
+
+.skill-compare-metric-value {
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.skill-compare-metric-hint {
+    margin-top: 0.3rem;
+}
+
+.skill-compare-detail-block {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+.skill-compare-detail-value {
+    margin-top: 0.25rem;
+    white-space: pre-line;
+}
+
+.skill-compare-advantage-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.skill-compare-advantage-item {
+    padding: 0.9rem 1rem;
+    border-radius: 0.85rem;
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 10%, var(--bs-border-color));
+    background: color-mix(in srgb, var(--bs-tertiary-bg) 78%, transparent);
+}
+
+.skill-compare-advantage-value {
+    margin-top: 0.15rem;
+    font-size: 1.02rem;
+    font-weight: 600;
+}
+
+.skill-compare-table thead th {
+    border-bottom-width: 1px;
+    color: var(--bs-secondary-color);
+    font-size: 0.83rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.skill-compare-table tbody th,
+.skill-compare-table tbody td {
+    vertical-align: top;
+    border-color: var(--bs-border-color);
+}
+
+.skill-compare-cell-text {
+    white-space: pre-line;
+}
+
+.skill-compare-different-row > * {
+    background: color-mix(in srgb, var(--bs-tertiary-bg) 82%, transparent);
+}
+
+@media (max-width: 767.98px) {
+    .skill-compare-metrics {
+        grid-template-columns: 1fr;
+    }
+}
