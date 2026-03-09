@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import logging
 import os
 from pathlib import Path
 import platform
@@ -15,6 +16,8 @@ import unicodedata
 from games.expedition33.calculator.core import CALCULATOR_DATA, DEFAULT_CHARACTER
 from games.expedition33.calculator.pictos import PICTO_DEFINITIONS
 from games.expedition33.calculator.weapons import WEAPON_DEFINITIONS, normalize_weapon_level
+
+logger = logging.getLogger(__name__)
 
 
 class SaveImportError(RuntimeError):
@@ -50,6 +53,8 @@ class SaveImportPayload(TypedDict):
 
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
+MAX_SAVE_UPLOAD_BYTES = 10 * 1024 * 1024
+UESAVE_TIMEOUT_SECONDS = 10
 DEFAULT_UESAVE_BINARIES = {
     ("Linux", "x86_64"): ROOT_DIR / "tools" / "uesave" / "uesave_cli-x86_64-unknown-linux-gnu" / "uesave",
 }
@@ -191,6 +196,8 @@ def decode_upload_contents(contents: str) -> bytes:
     _, _, encoded = contents.partition(",")
     if not encoded:
         raise SaveImportError("Upload payload was empty.")
+    if estimated_decoded_size(encoded) > MAX_SAVE_UPLOAD_BYTES:
+        raise SaveImportError("Uploaded save is too large.")
 
     try:
         return base64.b64decode(encoded, validate=True)
@@ -201,6 +208,7 @@ def decode_upload_contents(contents: str) -> bytes:
 def parse_uploaded_save(contents: str, filename: str | None = None) -> SaveImportPayload:
     """Convert uploaded `.sav` contents into normalized calculator state."""
 
+    validate_upload_filename(filename)
     save_bytes = decode_upload_contents(contents)
     save_json = convert_save_bytes_to_json(save_bytes)
     payload = build_import_payload(save_json, filename or "uploaded.sav")
@@ -213,20 +221,43 @@ def convert_save_bytes_to_json(save_bytes: bytes) -> dict[str, Any]:
     """Run the official uesave CLI against raw bytes and parse the JSON output."""
 
     executable = resolve_uesave_binary()
-    process = subprocess.run(
-        [str(executable), "to-json", "--no-warn", "-i", "-", "-o", "-"],
-        input=save_bytes,
-        capture_output=True,
-        check=False,
-    )
+    try:
+        process = subprocess.run(
+            [str(executable), "to-json", "--no-warn", "-i", "-", "-o", "-"],
+            input=save_bytes,
+            capture_output=True,
+            check=False,
+            timeout=UESAVE_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        logger.warning("uesave timed out while parsing uploaded save", exc_info=exc)
+        raise SaveImportError("Uploaded save took too long to parse.") from exc
     if process.returncode != 0:
         error_text = process.stderr.decode("utf-8", errors="replace").strip()
-        raise SaveImportError(error_text or "uesave failed to parse the uploaded save.")
+        logger.warning("uesave failed to parse uploaded save: %s", error_text or "<empty stderr>")
+        raise SaveImportError("Uploaded save could not be parsed.") from None
 
     try:
         return json.loads(process.stdout.decode("utf-8"))
     except json.JSONDecodeError as exc:
+        logger.warning("uesave returned invalid JSON while parsing uploaded save", exc_info=exc)
         raise SaveImportError("uesave returned invalid JSON for the uploaded save.") from exc
+
+
+def validate_upload_filename(filename: str | None) -> None:
+    """Reject uploads that do not look like Expedition 33 save files."""
+
+    if not filename:
+        return
+    if not filename.lower().endswith(".sav"):
+        raise SaveImportError("Only .sav files are supported.")
+
+
+def estimated_decoded_size(encoded: str) -> int:
+    """Estimate the decoded size without allocating the full byte array first."""
+
+    padding = len(encoded) - len(encoded.rstrip("="))
+    return (len(encoded) * 3) // 4 - padding
 
 
 def resolve_uesave_binary() -> Path:
