@@ -620,6 +620,15 @@ compare_skill_dropdown = dcc.Dropdown(
     placeholder="Optional second skill for comparison",
 )
 
+save_upload = dcc.Upload(
+    id="exp33-calculator-save-upload",
+    children=dmc.Button("Import .sav", variant="light"),
+    accept=".sav,.SAV",
+    multiple=False,
+)
+
+save_import_store = dcc.Store(id="exp33-calculator-save-import-store")
+
 attack_input = dmc.NumberInput(
     id="exp33-calculator-attack",
     label="Attack Power",
@@ -1264,6 +1273,7 @@ title_card = build_title_card("Skill Damage Calculator")
 
 layout = dbc.Container(
     [
+        save_import_store,
         title_card,
         dbc.Alert(
             html.Div(
@@ -1318,6 +1328,82 @@ layout = dbc.Container(
                             dbc.CardBody(
                                 dmc.Stack(
                                     [
+                                        html.Div(
+                                            [
+                                                dmc.Group(
+                                                    [
+                                                        save_upload,
+                                                        dmc.Text(
+                                                            "Import a Clair Obscur: Expedition 33 `.sav` to prefill character, weapon, skill, and lumina selections.",
+                                                            c="dimmed",
+                                                            size="sm",
+                                                        ),
+                                                    ],
+                                                    gap="sm",
+                                                    align="center",
+                                                ),
+                                                dbc.Alert(
+                                                    [
+                                                        html.P(
+                                                            [
+                                                                "Save filename pattern: ",
+                                                                html.Code("EXPEDITION_0_<save date>.sav"),
+                                                            ],
+                                                            className="mb-1",
+                                                        ),
+                                                        html.P(
+                                                            [
+                                                                "Linux: ",
+                                                                html.Code(
+                                                                    "/steamuser/AppData/Local/Sandfall/Saved/SaveGames/<profile>/Backup/"
+                                                                ),
+                                                            ],
+                                                            className="mb-1",
+                                                        ),
+                                                        html.P(
+                                                            [
+                                                                "Windows: ",
+                                                                html.Code(
+                                                                    "C:\\Users\\<Your User Name>\\AppData\\Local\\Sandfall\\Saved\\SaveGames\\<some number>"
+                                                                ),
+                                                            ],
+                                                            className="mb-1",
+                                                        ),
+                                                        html.P(
+                                                            [
+                                                                "Game Pass: ",
+                                                                html.Code(
+                                                                    r"C:\Users\<Your User Name>\AppData\Local\Packages\KeplerInteractive.Expedition33_<some id>\SystemAppData\wgs\<numbered folders>"
+                                                                ),
+                                                            ],
+                                                            className="mb-1",
+                                                        ),
+                                                        dmc.Text(
+                                                            "If AppData is not visible in File Explorer, turn on hidden files.",
+                                                            c="dimmed",
+                                                            size="sm",
+                                                        ),
+                                                    ],
+                                                    color="secondary",
+                                                    className="mt-2 mb-0 py-2",
+                                                ),
+                                                dbc.Alert(
+                                                    id="exp33-calculator-save-import-status",
+                                                    is_open=False,
+                                                    color="info",
+                                                    className="mt-2 mb-0",
+                                                ),
+                                                dbc.Card(
+                                                    [
+                                                        dbc.CardHeader("Imported Build"),
+                                                        dbc.CardBody(id="exp33-calculator-save-summary-body"),
+                                                    ],
+                                                    id="exp33-calculator-save-summary-card",
+                                                    className="mt-2",
+                                                    style=HIDDEN_STYLE,
+                                                ),
+                                            ]
+                                        ),
                                         character_select,
                                         html.Div(
                                             [

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dash import Input, Output, callback
+from dash import html, Input, Output, State, callback, no_update
 from typing import Any, TypeAlias, TypedDict
 from games.expedition33.calculator.core import (
     AffinityDetails,
@@ -8,6 +8,7 @@ from games.expedition33.calculator.core import (
     CalculationResult,
     CalculatorRow,
     CalculatorState,
+    CHARACTER_META,
     CharacterStyles,
     clamp_int,
     ComponentChildren,
@@ -39,6 +40,7 @@ from games.expedition33.calculator.logic import (
     resolve_picto_attack_type,
 )
 from games.expedition33.calculator.pictos import PictoSummary, evaluate_pictos, required_picto_controls
+from games.expedition33.calculator.save_import import parse_uploaded_save
 from games.expedition33.calculator.weapons import (
     WeaponSummary,
     evaluate_weapon,
@@ -48,7 +50,7 @@ from games.expedition33.calculator.weapons import (
     weapon_options_for,
 )
 
-SkillDropdownUpdate: TypeAlias = tuple[list[SkillOption], str, list[SkillOption], None, float]
+SkillDropdownUpdate: TypeAlias = tuple[list[SkillOption], str, list[SkillOption], str | None, float]
 VisibleControlsUpdate: TypeAlias = tuple[Any, ...]
 CalculatorResultPanels: TypeAlias = tuple[
     StyleRule,
@@ -72,6 +74,57 @@ class EvaluatedSkillView(TypedDict):
     skill_result: CalculationResult
     current_cost: str
     total_bonus_factor: float
+
+
+def imported_build(save_import: dict[str, Any] | None, character: str) -> dict[str, Any] | None:
+    """Return the imported build payload for one character when available."""
+
+    if not isinstance(save_import, dict):
+        return None
+    characters = save_import.get("characters")
+    if not isinstance(characters, dict):
+        return None
+    build = characters.get(character)
+    return build if isinstance(build, dict) else None
+
+
+def build_import_summary(build: dict[str, Any], filename: str) -> ComponentChildren:
+    """Render a compact summary of the currently imported build."""
+
+    attributes = build.get("attributes", {})
+    attribute_text = (
+        ", ".join(f"{name}: {value}" for name, value in attributes.items())
+        if isinstance(attributes, dict) and attributes
+        else "No assigned attribute points found."
+    )
+    weapon_name = build.get("equipped_weapon") or build.get("raw_equipped_weapon") or "None"
+    raw_weapon_level = build.get("raw_weapon_level")
+    weapon_level = build.get("weapon_level")
+    if raw_weapon_level is None:
+        weapon_level_text = "No weapon progression found."
+    else:
+        weapon_level_text = f"Save level {raw_weapon_level} -> calculator passive tier {weapon_level}"
+
+    matched_skills = ", ".join(build.get("equipped_skills") or []) or "No equipped skills matched the calculator list."
+    unmatched_skills = ", ".join(build.get("unmatched_skills") or []) or "None"
+    matched_pictos = ", ".join(build.get("equipped_pictos") or []) or "No supported equipped lumina were matched."
+    unmatched_pictos = ", ".join(build.get("unmatched_pictos") or []) or "None"
+
+    return [
+        html.P(f"Source: {filename}", className="mb-2"),
+        html.P(f"Level: {build.get('level', 0)}", className="mb-1"),
+        html.P(
+            f"Lumina from consumables: {build.get('lumina_from_consumables', 0)}",
+            className="mb-1",
+        ),
+        html.P(f"Attributes: {attribute_text}", className="mb-1"),
+        html.P(f"Equipped weapon: {weapon_name}", className="mb-1"),
+        html.P(weapon_level_text, className="mb-1"),
+        html.P(f"Matched equipped skills: {matched_skills}", className="mb-1"),
+        html.P(f"Unmatched save skill ids: {unmatched_skills}", className="mb-1"),
+        html.P(f"Matched equipped lumina: {matched_pictos}", className="mb-1"),
+        html.P(f"Unmatched save lumina ids: {unmatched_pictos}", className="mb-0"),
+    ]
 
 
 def build_character_section_styles(active_character: str) -> tuple[list[str], CharacterStyles]:
@@ -402,18 +455,91 @@ def build_weapon_state(
 
 
 @callback(
+    Output("exp33-calculator-save-import-store", "data"),
+    Output("exp33-calculator-save-import-status", "children"),
+    Output("exp33-calculator-save-import-status", "color"),
+    Output("exp33-calculator-save-import-status", "is_open"),
+    Output("exp33-calculator-character", "value"),
+    Input("exp33-calculator-save-upload", "contents"),
+    State("exp33-calculator-save-upload", "filename"),
+    State("exp33-calculator-character", "value"),
+    prevent_initial_call=True,
+)
+def import_save_file(
+    contents: str | None,
+    filename: str | None,
+    current_character: str | None,
+) -> tuple[dict[str, Any] | None, str | Any, str | Any, bool | Any, str | Any]:
+    """Parse an uploaded `.sav` file into calculator-ready state."""
+
+    if not contents:
+        return no_update, no_update, no_update, no_update, no_update
+
+    try:
+        payload = parse_uploaded_save(contents, filename)
+    except Exception as exc:
+        return None, str(exc), "danger", True, no_update
+
+    available_characters = [
+        CHARACTER_META[character]["label"]
+        for character in CALCULATOR_DATA
+        if character in payload["characters"]
+    ]
+    preferred_character = (
+        current_character
+        if current_character in payload["characters"]
+        else payload["preferred_character"]
+    )
+    message = (
+        f"Imported {payload['filename']} for {', '.join(available_characters)}. "
+        "Attack Power still needs manual input."
+    )
+    return payload, message, "info", True, preferred_character
+
+
+@callback(
+    Output("exp33-calculator-save-summary-card", "style"),
+    Output("exp33-calculator-save-summary-body", "children"),
+    Input("exp33-calculator-character", "value"),
+    Input("exp33-calculator-save-import-store", "data"),
+)
+def update_import_summary(
+    character: str | None,
+    save_import: dict[str, Any] | None,
+) -> tuple[StyleRule, ComponentChildren]:
+    """Show the imported build summary for the active character."""
+
+    selected_character = character or DEFAULT_CHARACTER
+    build = imported_build(save_import, selected_character)
+    if not build:
+        return HIDDEN_STYLE, []
+
+    filename = (
+        str(save_import.get("filename") or "uploaded.sav")
+        if isinstance(save_import, dict)
+        else "uploaded.sav"
+    )
+    return VISIBLE_STYLE, build_import_summary(build, filename)
+
+
+@callback(
     Output("exp33-calculator-skill", "options"),
     Output("exp33-calculator-skill", "value"),
     Output("exp33-calculator-compare-skill", "options"),
     Output("exp33-calculator-compare-skill", "value"),
     Output("exp33-calculator-attack", "value"),
     Input("exp33-calculator-character", "value"),
+    Input("exp33-calculator-save-import-store", "data"),
 )
-def update_skill_dropdown(character: str | None) -> SkillDropdownUpdate:
+def update_skill_dropdown(
+    character: str | None,
+    save_import: dict[str, Any] | None,
+) -> SkillDropdownUpdate:
     """Refresh the skill dropdown and default attack when the character changes.
 
     Args:
         character: The selected calculator character id.
+        save_import: Optional imported build data from an uploaded save.
 
     Returns:
         A tuple of ``(primary_options, primary_skill, compare_options,
@@ -425,10 +551,26 @@ def update_skill_dropdown(character: str | None) -> SkillDropdownUpdate:
     selected_character = character or DEFAULT_CHARACTER
     options = skill_options_for(selected_character)
     default_skill = DEFAULT_SKILLS.get(selected_character, options[0]["value"])
+    compare_skill = None
     if default_skill not in {option["value"] for option in options}:
         default_skill = options[0]["value"]
     attack = CALCULATOR_DATA[selected_character]["default_attack"]
-    return options, default_skill, options, None, attack
+    build = imported_build(save_import, selected_character)
+    if build:
+        option_values = {option["value"] for option in options}
+        matched_skills = [
+            skill
+            for skill in build.get("equipped_skills", [])
+            if skill in option_values
+        ]
+        if matched_skills:
+            default_skill = matched_skills[0]
+        if len(matched_skills) > 1:
+            compare_skill = next(
+                (skill for skill in matched_skills[1:] if skill != default_skill),
+                None,
+            )
+    return options, default_skill, options, compare_skill, attack
 
 
 @callback(
@@ -436,12 +578,17 @@ def update_skill_dropdown(character: str | None) -> SkillDropdownUpdate:
     Output("exp33-calculator-weapon", "value"),
     Output("exp33-calculator-weapon-level", "value"),
     Input("exp33-calculator-character", "value"),
+    Input("exp33-calculator-save-import-store", "data"),
 )
-def update_weapon_dropdown(character: str | None) -> tuple[list[SkillOption], None, str]:
+def update_weapon_dropdown(
+    character: str | None,
+    save_import: dict[str, Any] | None,
+) -> tuple[list[SkillOption], str | None, str]:
     """Refresh the weapon dropdown when the character changes.
 
     Args:
         character: The selected calculator character id.
+        save_import: Optional imported build data from an uploaded save.
 
     Returns:
         A tuple of ``(options, selected_weapon, selected_level)`` for the
@@ -449,7 +596,36 @@ def update_weapon_dropdown(character: str | None) -> tuple[list[SkillOption], No
     """
 
     selected_character = character or DEFAULT_CHARACTER
-    return weapon_options_for(selected_character), None, "20"
+    options = weapon_options_for(selected_character)
+    build = imported_build(save_import, selected_character)
+    if not build:
+        return options, None, "20"
+
+    option_values = {option["value"] for option in options}
+    selected_weapon = build.get("equipped_weapon")
+    if selected_weapon not in option_values:
+        return options, None, "20"
+
+    selected_level = str(build.get("weapon_level") or "20")
+    return options, selected_weapon, selected_level
+
+
+@callback(
+    Output("exp33-calculator-pictos", "value"),
+    Input("exp33-calculator-character", "value"),
+    Input("exp33-calculator-save-import-store", "data"),
+)
+def update_imported_pictos(
+    character: str | None,
+    save_import: dict[str, Any] | None,
+) -> list[str]:
+    """Prefill equipped lumina from the imported save when available."""
+
+    selected_character = character or DEFAULT_CHARACTER
+    build = imported_build(save_import, selected_character)
+    if not build:
+        return []
+    return [str(name) for name in build.get("equipped_pictos", [])]
 
 
 @callback(
