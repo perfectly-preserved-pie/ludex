@@ -50,6 +50,12 @@ def build_games_tree() -> list[dict[str, Any]]:
 app = dash.Dash(
     __name__,
     description="An index of resources for various games.",
+    external_scripts=[
+        {
+            "src": "https://plausible.automateordie.io/js/pa-LPoOV2pIp1B60qeTlaXqj.js",
+            "async": "async",
+        }
+    ],
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     pages_folder="games",
     suppress_callback_exceptions=True,  # tree lives in page layout, not top-level
