@@ -10,7 +10,7 @@ dependencies = [
     "dash-ag-grid==33.3.3",
     "dash-bootstrap-components==2.0.4",
     "dash-iconify==0.1.2",
-    "dash-mantine-components==2.6.0",
+    "dash-mantine-components==2.6.1",
     "dash==4.0.0",
     "gunicorn==25.1.0",
     "pandas==3.0.1",
