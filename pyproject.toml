@@ -13,6 +13,6 @@ dependencies = [
     "dash-mantine-components==2.6.0",
     "dash==4.0.0",
     "gunicorn==25.1.0",
-    "pandas==3.0.1",
+    "pandas==3.0.2",
     "loguru>=0.7.3",
 ]
