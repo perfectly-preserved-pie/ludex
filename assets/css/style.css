@@ -183,6 +183,32 @@ html[data-mantine-color-scheme="dark"] .dmc {
     background: color-mix(in srgb, var(--bs-tertiary-bg) 82%, transparent);
 }
 
+.xenosaga-item-detail-inline {
+    margin-bottom: 0.8rem;
+    line-height: 1.45;
+}
+
+.xenosaga-item-tooltip-target {
+    color: var(--bs-link-color);
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 0.18em;
+}
+
+.xenosaga-item-tooltip-indicator {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.25rem;
+    color: var(--bs-secondary-color);
+    vertical-align: text-bottom;
+}
+
+.xenosaga-item-tooltip .tooltip-inner {
+    max-width: 320px;
+    text-align: left;
+    line-height: 1.45;
+}
+
 @media (max-width: 767.98px) {
     .skill-compare-metrics {
         grid-template-columns: 1fr;

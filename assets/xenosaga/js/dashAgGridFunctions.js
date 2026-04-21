@@ -37,3 +37,34 @@ dagfuncs.formatNumberWithCommas = function (params) {
     maximumFractionDigits: 20
   }).format(numericValue);
 };
+
+// Read a sibling field from the row for tooltip display.
+dagfuncs.getLinkedFieldValue = function (params, fieldName) {
+  if (!params || !params.data || !fieldName) {
+    return null;
+  }
+
+  var value = params.data[fieldName];
+  return value === null || value === undefined || value === "" ? null : value;
+};
+
+// Apply a subtle affordance when a drop has extra item details behind it.
+dagfuncs.getItemDropCellStyle = function (params, effectField) {
+  var hasEffect = Boolean(
+    params &&
+    params.data &&
+    effectField &&
+    params.data[effectField]
+  );
+
+  if (!hasEffect) {
+    return null;
+  }
+
+  return {
+    color: "var(--bs-link-color)",
+    cursor: "help",
+    textDecoration: "underline dotted",
+    textUnderlineOffset: "0.18em"
+  };
+};

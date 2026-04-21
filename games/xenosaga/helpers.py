@@ -1,12 +1,21 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from typing import Any
 
 import pandas as pd
+import dash_bootstrap_components as dbc
 from dash import html
+from dash_iconify import DashIconify
+from games.xenosaga.item_effects import get_episode1_item_effect
 from pandas.api.types import is_numeric_dtype
+
+EPISODE1_DROP_EFFECT_FIELDS = {
+    "Normal Drop": "Normal Drop Effect",
+    "Rare Drop": "Rare Drop Effect",
+}
 
 
 def load_episode_rows(connection: sqlite3.Connection, table_name: str) -> pd.DataFrame:
@@ -26,6 +35,62 @@ def load_episode_rows(connection: sqlite3.Connection, table_name: str) -> pd.Dat
         frame = frame.drop(columns=["uuid"])
     frame = frame.sort_values(by=["Name"], na_position="last")
     return frame
+
+
+def enrich_episode1_drop_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    """Attach hidden Episode I item-effect fields used by the UI."""
+
+    enriched_frame = frame.copy()
+    for field, effect_field in EPISODE1_DROP_EFFECT_FIELDS.items():
+        if field not in enriched_frame.columns:
+            continue
+        enriched_frame[effect_field] = enriched_frame[field].map(get_episode1_item_effect)
+    return enriched_frame
+
+
+def build_episode1_item_detail(label: str, item_name: Any, effect: Any) -> html.Div:
+    """Render an inline Episode I drop row with a hover/focus tooltip."""
+
+    item_label = str(item_name).strip() if item_name is not None else "N/A"
+    if item_label == "":
+        item_label = "N/A"
+
+    formatted_item = format_value(item_label)
+    tooltip_target_id = re.sub(r"[^a-z0-9]+", "-", f"{label}-{formatted_item}".lower()).strip("-")
+    tooltip_target_id = f"xenosaga-item-detail-{tooltip_target_id or 'unknown'}"
+
+    detail_children: list[Any] = [
+        html.B(f"{label}: "),
+        html.Span(
+            formatted_item,
+            id=tooltip_target_id,
+            className="xenosaga-item-tooltip-target",
+            tabIndex=0,
+        ),
+    ]
+    if effect:
+        detail_children.extend(
+            [
+                html.Span(
+                    DashIconify(
+                        icon="material-symbols:info-outline-rounded",
+                        width=14,
+                        height=14,
+                    ),
+                    className="xenosaga-item-tooltip-indicator",
+                    **{"aria-hidden": "true"},
+                ),
+                dbc.Tooltip(
+                    str(effect),
+                    target=tooltip_target_id,
+                    placement="top",
+                    className="xenosaga-item-tooltip",
+                    trigger="hover focus",
+                ),
+            ]
+        )
+
+    return html.Div(detail_children, className="xenosaga-item-detail-inline")
 
 
 def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
@@ -95,6 +160,33 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
             col_def["pinned"] = "left"
         column_defs.append(col_def)
     return column_defs
+
+
+def style_episode1_drop_columns(column_defs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Make Episode I drop columns compact, with hover affordances."""
+
+    styled_column_defs: list[dict[str, Any]] = []
+    for col_def in column_defs:
+        field = col_def.get("field")
+        effect_field = EPISODE1_DROP_EFFECT_FIELDS.get(field)
+        if not effect_field:
+            styled_column_defs.append(col_def)
+            continue
+
+        styled_column_defs.append(
+            {
+                **col_def,
+                "minWidth": 170,
+                "tooltipValueGetter": {
+                    "function": f"getLinkedFieldValue(params, {json.dumps(effect_field)})"
+                },
+                "cellStyle": {
+                    "function": f"getItemDropCellStyle(params, {json.dumps(effect_field)})"
+                },
+            }
+        )
+
+    return styled_column_defs
 
 
 def get_boolean_like_columns(frame: pd.DataFrame) -> set[str]:
