@@ -132,6 +132,118 @@ EPISODE2_ITEM_ALIASES: dict[str, str] = {
     _normalize_item_name("Junked Circuits"): _normalize_item_name("Junked Circuit"),
 }
 
+EPISODE3_ITEM_EFFECTS: dict[str, str] = {
+    _normalize_item_name("AF-Stealth II"): "E.S. Asher armor: Max HP 47,610",
+    _normalize_item_name("All Repair"): "Recover all HP for all E.S. allies",
+    _normalize_item_name("Andvari"): "Small G gain boost, small rare-item boost",
+    _normalize_item_name("Anti-Crystal"): "Cures Crystallize",
+    _normalize_item_name("Antidote"): "Cures Poison",
+    _normalize_item_name("Blue Star"): "EP +100",
+    _normalize_item_name("C-US10"): "E.S. CPU: Max slots 10",
+    _normalize_item_name("Cleanser"): "Cures most status effects except Crystallize",
+    _normalize_item_name("Coral Stone"): "Null Rasp",
+    _normalize_item_name("Crescent Moon"): "Small SP gain boost",
+    _normalize_item_name("Crystal of Spite"): "Sell-only barter item",
+    _normalize_item_name("D-Anima"): "E.S. disk: Increase Anima Gauge rate",
+    _normalize_item_name("D-Counter"): "E.S. disk: Short Counter",
+    _normalize_item_name("D-EN I"): "E.S. disk: EN +50",
+    _normalize_item_name("D-EN III"): "E.S. disk: EN +200",
+    _normalize_item_name("D-EXP II"): "E.S. disk: Large EXP gain boost",
+    _normalize_item_name("D-Half Physical"): "E.S. disk: 1/2 Physical",
+    _normalize_item_name("D-Nullify Evade"): "E.S. disk: Null E-Evade",
+    _normalize_item_name("D-SP II"): "E.S. disk: Large SP gain boost",
+    _normalize_item_name("D-Type M"): "E.S. disk: Type M Critical",
+    _normalize_item_name("DEX Upgrade"): "Increase maximum Dexterity by 2",
+    _normalize_item_name("DF-XX"): "E.S. Dinah armor: Max HP 41,260",
+    _normalize_item_name("Decoder 6"): "Opens Segment Address Door 6",
+    _normalize_item_name("Decoder 9"): "Opens Segment Address Door 9",
+    _normalize_item_name("Decoder 11"): "Opens Segment Address Door 11",
+    _normalize_item_name("Dog Tag"): "Break Limit +150",
+    _normalize_item_name("Double Vestment"): "Strength +6, Evade +5",
+    _normalize_item_name("Down Repair"): "Cures E.S. stat-down effects and F Mine",
+    _normalize_item_name("EATK Upgrade"): "Increase maximum Ether Attack by 2",
+    _normalize_item_name("EVA Upgrade"): "Increase maximum Evade by 2",
+    _normalize_item_name("Ether Core"): "Sell-only barter item",
+    _normalize_item_name("Ether Pack L"): "Recover all EP",
+    _normalize_item_name("Ether Pack M"): "Recover medium amount of EP",
+    _normalize_item_name("Ether Pack S"): "Recover small amount of EP",
+    _normalize_item_name("Evangelist"): "Max Boost +3, large EXP gain boost, large SP gain boost",
+    _normalize_item_name("General's Bracelet"): "1/2 Fire, 1/2 Ice, 1/2 Lightning",
+    _normalize_item_name("God Circle"): "Null Misty",
+    _normalize_item_name("God's Experience"): "Large EXP gain boost",
+    _normalize_item_name("Grand Design"): "Null status effects",
+    _normalize_item_name("Green Oasis"): "HP +300",
+    _normalize_item_name("Gustav Ring"): "HP +1500",
+    _normalize_item_name("Gustav Wrist"): "2x defense vs. biological, mechanical, and gnosis enemies",
+    _normalize_item_name("HP Upgrade"): "Increase maximum HP by 25",
+    _normalize_item_name("Half Repair"): "Recover medium HP for all E.S. allies",
+    _normalize_item_name("I.D. Plate"): "Sell-only barter item",
+    _normalize_item_name("Imperial"): "Null Lock",
+    _normalize_item_name("Junked Circuit"): "Sell-only barter item",
+    _normalize_item_name("KAP-VEL"): "Agility +10, Break Limit +100",
+    _normalize_item_name("Kajic Neck"): "Recovery Ether+",
+    _normalize_item_name("Kajic Ring"): "EP +300",
+    _normalize_item_name("Kajic Wrist"): "2x defense vs. mechanical enemies, 1/2 Fire, 1/2 Guard",
+    _normalize_item_name("Life Demon"): "HP Drain, EP +100, Break Limit +100",
+    _normalize_item_name("Med Kit"): "Recover small amount of HP",
+    _normalize_item_name("Med Kit DX"): "Recover all HP for all allies",
+    _normalize_item_name("Med Kit L"): "Recover all HP",
+    _normalize_item_name("Med Kit M"): "Recover medium amount of HP",
+    _normalize_item_name("Med Kit S"): "Recover small amount of HP",
+    _normalize_item_name("Nano Repair DX"): "Recover all HP for one E.S. ally",
+    _normalize_item_name("Nano Repair M"): "Recover medium HP for one E.S. ally",
+    _normalize_item_name("Nullifier"): "Removes an enemy's active status support",
+    _normalize_item_name("Power Leech"): "HP Drain, Increase Counter, Increase Double",
+    _normalize_item_name("RF-Acala"): "E.S. Reuben armor: Max HP 43,160",
+    _normalize_item_name("Rank Badge"): "Sell-only barter item",
+    _normalize_item_name("Rejuvenator DX"): "Recover all HP and EP for all allies",
+    _normalize_item_name("Rejuvenator L"): "Recover all HP and EP",
+    _normalize_item_name("Rejuvenator M"): "Recover medium amount of HP and EP",
+    _normalize_item_name("Remover"): "Cures stat-down effects",
+    _normalize_item_name("Research Uniform"): "Agility +30",
+    _normalize_item_name("Revive M"): "Revive and recover medium amount of HP",
+    _normalize_item_name("Shock Absorbant Shirt"): "Break Limit +60",
+    _normalize_item_name("STR Upgrade"): "Increase maximum Strength by 2",
+    _normalize_item_name("Salt Pillar"): "Sell-only barter item",
+    _normalize_item_name("Scrap Iron"): "Sell-only barter item",
+    _normalize_item_name("Sephirotic Cane"): "Sell-only barter item",
+    _normalize_item_name("Skill Upgrade A"): "Increase skill points by 10",
+    _normalize_item_name("Skill Upgrade B"): "Increase skill points by 50",
+    _normalize_item_name("Skill Upgrade C"): "Increase skill points by 100",
+    _normalize_item_name("Soul Collector"): "Null Curse",
+    _normalize_item_name("Union Neck"): "Max Boost +1",
+    _normalize_item_name("Union Ring"): "Null E-Guard and E-Evade",
+    _normalize_item_name("Union Wrist"): "2x defense vs. gnosis enemies, 1/2 Ice, 1/2 Guard",
+    _normalize_item_name("Unknown Bracelet"): "Null Accuracy/Evade Down",
+    _normalize_item_name("Velvet Breath"): "2x defense vs. biological enemies, 1/2 Lightning, 1/2 Guard",
+    _normalize_item_name("Velvet Pannier"): "Luck +10, Break Limit +80",
+    _normalize_item_name("Venom Ring"): "Adds Poison, EP +50",
+    _normalize_item_name("Weapon Development Area Key"): (
+        "Permits access to the Omega Universitas simulation room"
+    ),
+    _normalize_item_name("White Fragment"): "Sell-only barter item",
+    _normalize_item_name("White Shirt"): "Luck +60",
+    _normalize_item_name("ZF-Rybeus"): "E.S. Zebulun armor: Max HP boost",
+}
+
+EPISODE3_ITEM_ALIASES: dict[str, str] = {
+    _normalize_item_name("AF-Stealth III"): _normalize_item_name("AF-Stealth II"),
+    _normalize_item_name("D-SPII"): _normalize_item_name("D-SP II"),
+    _normalize_item_name("Decoder 06"): _normalize_item_name("Decoder 6"),
+    _normalize_item_name("Decoder 09"): _normalize_item_name("Decoder 9"),
+    _normalize_item_name("Gustav's Ring"): _normalize_item_name("Gustav Ring"),
+    _normalize_item_name("I.D Plate"): _normalize_item_name("I.D. Plate"),
+    _normalize_item_name("Junked Curcuit"): _normalize_item_name("Junked Circuit"),
+    _normalize_item_name("Nano Repar DX"): _normalize_item_name("Nano Repair DX"),
+    _normalize_item_name("Rivive M"): _normalize_item_name("Revive M"),
+    _normalize_item_name("Sephiratic Cane"): _normalize_item_name("Sephirotic Cane"),
+    _normalize_item_name("Seraphatic Cane"): _normalize_item_name("Sephirotic Cane"),
+    _normalize_item_name("Soul Collecter"): _normalize_item_name("Soul Collector"),
+    _normalize_item_name("S. Absorbent Shirt"): _normalize_item_name("Shock Absorbant Shirt"),
+    _normalize_item_name("W.D.A Key"): _normalize_item_name("Weapon Development Area Key"),
+    _normalize_item_name("White Fragmant"): _normalize_item_name("White Fragment"),
+}
+
 
 def get_episode1_item_effect(item_name: Any) -> str | None:
     """Return a short XS1 item description for display, if one is known."""
@@ -162,3 +274,18 @@ def get_episode2_item_effect(item_name: Any) -> str | None:
     normalized_name = _normalize_item_name(raw_name)
     normalized_name = EPISODE2_ITEM_ALIASES.get(normalized_name, normalized_name)
     return EPISODE2_ITEM_EFFECTS.get(normalized_name)
+
+
+def get_episode3_item_effect(item_name: Any) -> str | None:
+    """Return a short XS3 item description for display, if one is known."""
+
+    if item_name is None:
+        return None
+
+    raw_name = str(item_name).strip()
+    if raw_name == "" or raw_name == "N/A":
+        return None
+
+    normalized_name = _normalize_item_name(raw_name)
+    normalized_name = EPISODE3_ITEM_ALIASES.get(normalized_name, normalized_name)
+    return EPISODE3_ITEM_EFFECTS.get(normalized_name)

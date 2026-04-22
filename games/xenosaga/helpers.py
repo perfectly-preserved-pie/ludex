@@ -9,7 +9,11 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import html
 from dash_iconify import DashIconify
-from games.xenosaga.item_effects import get_episode1_item_effect, get_episode2_item_effect
+from games.xenosaga.item_effects import (
+    get_episode1_item_effect,
+    get_episode2_item_effect,
+    get_episode3_item_effect,
+)
 from pandas.api.types import is_numeric_dtype
 
 EPISODE1_DROP_EFFECT_FIELDS = {
@@ -20,13 +24,20 @@ EPISODE2_DROP_EFFECT_FIELDS = {
     "Item": "Item Effect",
     "Rare Item": "Rare Item Effect",
 }
+EPISODE3_DROP_EFFECT_FIELDS = {
+    "Normal Drop": "Normal Drop Effect",
+    "Rare Drop": "Rare Drop Effect",
+    "Stealable Item": "Stealable Item Effect",
+}
 EPISODE_DROP_EFFECT_FIELDS = {
     "ep1": EPISODE1_DROP_EFFECT_FIELDS,
     "ep2": EPISODE2_DROP_EFFECT_FIELDS,
+    "ep3": EPISODE3_DROP_EFFECT_FIELDS,
 }
 ALL_DROP_EFFECT_FIELDS = {
     **EPISODE1_DROP_EFFECT_FIELDS,
     **EPISODE2_DROP_EFFECT_FIELDS,
+    **EPISODE3_DROP_EFFECT_FIELDS,
 }
 
 
@@ -56,6 +67,8 @@ def get_item_effect_for_episode(episode_tab: str, item_name: Any) -> str | None:
         return get_episode1_item_effect(item_name)
     if episode_tab == "ep2":
         return get_episode2_item_effect(item_name)
+    if episode_tab == "ep3":
+        return get_episode3_item_effect(item_name)
     return None
 
 
