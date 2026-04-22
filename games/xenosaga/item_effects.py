@@ -75,6 +75,63 @@ EPISODE1_ITEM_ALIASES: dict[str, str] = {
     _normalize_item_name("Junk Circuit A"): _normalize_item_name("Junked Circuit A"),
 }
 
+EPISODE2_ITEM_EFFECTS: dict[str, str] = {
+    _normalize_item_name("Anti-Beam Armor"): "Lower beam damage 25%",
+    _normalize_item_name("Anti-Fire Armor"): "Lower fire damage 25%",
+    _normalize_item_name("Anti-Ice Armor"): "Lower ice damage 25%",
+    _normalize_item_name("Anti-Thunder Armor"): "Lower thunder damage 25%",
+    _normalize_item_name("Antidote H"): "Heal H-type status effects",
+    _normalize_item_name("Antidote L"): "Heal L-type status effects",
+    _normalize_item_name("Auto Recover"): "Recover 50% HP when incapacitated (once)",
+    _normalize_item_name("Auxiliary Armor A"): "ARM +30",
+    _normalize_item_name("Auxiliary Armor B"): "ARM +40",
+    _normalize_item_name("Awakening I"): "Gains Double Attack Silver Duel",
+    _normalize_item_name("Awakening II"): "Gains Double Attack Gravity Bomb",
+    _normalize_item_name("Awakening III"): "Gains Double Attack Phoenix Blade",
+    _normalize_item_name("Awakening IV"): "Gains Blessed Miracle",
+    _normalize_item_name("Bio Sphere"): "Recover all HP and EP (entire party)",
+    _normalize_item_name("Charge Boost"): "Increase charge 25% by using the Stock command",
+    _normalize_item_name("Charge Clean"): "Clear all status effects by using the Stock command",
+    _normalize_item_name("Class Upgrade A"): "Class Points +10",
+    _normalize_item_name("Class Upgrade B"): "Class Points +50",
+    _normalize_item_name("EF Circuit A"): "EDEF +20",
+    _normalize_item_name("EF Circuit B"): "EDEF +30",
+    _normalize_item_name("EMAX300"): "Make maximum charge 300",
+    _normalize_item_name("Ether Core"): "Sell-only item",
+    _normalize_item_name("Ether Pack DX"): "Recovers all EP",
+    _normalize_item_name("Ether Pack M"): "Restores 50% of Max EP",
+    _normalize_item_name("Ether Pack S"): "Restores 25% of Max EP",
+    _normalize_item_name("G Blind Guard"): "Blind resistance +25%",
+    _normalize_item_name("G Boost Guard"): "Boost Lock resistance +25%",
+    _normalize_item_name("G Energy Guard"): "Charge Down resistance +25%",
+    _normalize_item_name("G Ether DD Guard"): "Ether DD resistance +25%",
+    _normalize_item_name("G Heavy Guard"): "Heavy resistance +25%",
+    _normalize_item_name("G Power Charge"): "Resistance to all status effects +25%",
+    _normalize_item_name("G ST Double"): "Double duration of status effects",
+    _normalize_item_name("G Stun Guard"): "Stun resistance +25%",
+    _normalize_item_name("G Weak Guard"): "Weak resistance +25%",
+    _normalize_item_name("Junked Circuit"): "Sell-only item",
+    _normalize_item_name("Med Kit L"): "Restores 75% of Max HP",
+    _normalize_item_name("Med Kit M"): "Restores 50% of Max HP",
+    _normalize_item_name("Med Kit S"): "Restores 25% of Max HP",
+    _normalize_item_name("Nano Repair A"): "Recover 25% of Max HP and EP (E.S. only)",
+    _normalize_item_name("Rejuvenator M"): "Recovers 50% of Max HP and EP",
+    _normalize_item_name("Revive DX"): "Revive and recover all HP",
+    _normalize_item_name("Revive S"): "Revive and recover 25% of Max HP",
+    _normalize_item_name("Scrap Iron"): "Sell-only item",
+    _normalize_item_name("Skill Upgrade A"): "Skill Points +10",
+    _normalize_item_name("Skill Upgrade B"): "Skill Points +30",
+    _normalize_item_name("Skill Upgrade C"): "Skill Points +50",
+    _normalize_item_name("Skill Upgrade D"): "Skill Points +100",
+    _normalize_item_name("Skill Upgrade E"): "Skill Points +500",
+    _normalize_item_name("Tuned Circuit"): "Agility +1",
+}
+
+EPISODE2_ITEM_ALIASES: dict[str, str] = {
+    _normalize_item_name("Charge Boots"): _normalize_item_name("Charge Boost"),
+    _normalize_item_name("Junked Circuits"): _normalize_item_name("Junked Circuit"),
+}
+
 
 def get_episode1_item_effect(item_name: Any) -> str | None:
     """Return a short XS1 item description for display, if one is known."""
@@ -89,3 +146,19 @@ def get_episode1_item_effect(item_name: Any) -> str | None:
     normalized_name = _normalize_item_name(raw_name)
     normalized_name = EPISODE1_ITEM_ALIASES.get(normalized_name, normalized_name)
     return EPISODE1_ITEM_EFFECTS.get(normalized_name)
+
+
+def get_episode2_item_effect(item_name: Any) -> str | None:
+    """Return a short XS2 item description for display, if one is known."""
+
+    if item_name is None:
+        return None
+
+    raw_name = str(item_name).strip()
+    if raw_name == "" or raw_name == "N/A":
+        return None
+
+    raw_name = re.sub(r"\s*\([^)]*%\)$", "", raw_name).strip()
+    normalized_name = _normalize_item_name(raw_name)
+    normalized_name = EPISODE2_ITEM_ALIASES.get(normalized_name, normalized_name)
+    return EPISODE2_ITEM_EFFECTS.get(normalized_name)

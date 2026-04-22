@@ -9,12 +9,24 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import html
 from dash_iconify import DashIconify
-from games.xenosaga.item_effects import get_episode1_item_effect
+from games.xenosaga.item_effects import get_episode1_item_effect, get_episode2_item_effect
 from pandas.api.types import is_numeric_dtype
 
 EPISODE1_DROP_EFFECT_FIELDS = {
     "Normal Drop": "Normal Drop Effect",
     "Rare Drop": "Rare Drop Effect",
+}
+EPISODE2_DROP_EFFECT_FIELDS = {
+    "Item": "Item Effect",
+    "Rare Item": "Rare Item Effect",
+}
+EPISODE_DROP_EFFECT_FIELDS = {
+    "ep1": EPISODE1_DROP_EFFECT_FIELDS,
+    "ep2": EPISODE2_DROP_EFFECT_FIELDS,
+}
+ALL_DROP_EFFECT_FIELDS = {
+    **EPISODE1_DROP_EFFECT_FIELDS,
+    **EPISODE2_DROP_EFFECT_FIELDS,
 }
 
 
@@ -37,19 +49,31 @@ def load_episode_rows(connection: sqlite3.Connection, table_name: str) -> pd.Dat
     return frame
 
 
-def enrich_episode1_drop_columns(frame: pd.DataFrame) -> pd.DataFrame:
-    """Attach hidden Episode I item-effect fields used by the UI."""
+def get_item_effect_for_episode(episode_tab: str, item_name: Any) -> str | None:
+    """Return a display description for a drop item based on the episode."""
+
+    if episode_tab == "ep1":
+        return get_episode1_item_effect(item_name)
+    if episode_tab == "ep2":
+        return get_episode2_item_effect(item_name)
+    return None
+
+
+def enrich_episode_drop_columns(frame: pd.DataFrame, episode_tab: str) -> pd.DataFrame:
+    """Attach hidden item-effect fields used by the UI."""
 
     enriched_frame = frame.copy()
-    for field, effect_field in EPISODE1_DROP_EFFECT_FIELDS.items():
+    for field, effect_field in EPISODE_DROP_EFFECT_FIELDS.get(episode_tab, {}).items():
         if field not in enriched_frame.columns:
             continue
-        enriched_frame[effect_field] = enriched_frame[field].map(get_episode1_item_effect)
+        enriched_frame[effect_field] = enriched_frame[field].map(
+            lambda value: get_item_effect_for_episode(episode_tab, value)
+        )
     return enriched_frame
 
 
 def build_episode1_item_detail(label: str, item_name: Any, effect: Any) -> html.Div:
-    """Render an inline Episode I drop row with a hover/focus tooltip."""
+    """Render an inline item drop row with a hover/focus tooltip."""
 
     item_label = str(item_name).strip() if item_name is not None else "N/A"
     if item_label == "":
@@ -162,13 +186,14 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
     return column_defs
 
 
-def style_episode1_drop_columns(column_defs: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Make Episode I drop columns compact, with hover affordances."""
+def style_episode_drop_columns(column_defs: list[dict[str, Any]], episode_tab: str) -> list[dict[str, Any]]:
+    """Make item drop columns compact, with hover affordances."""
 
     styled_column_defs: list[dict[str, Any]] = []
+    drop_effect_fields = EPISODE_DROP_EFFECT_FIELDS.get(episode_tab, {})
     for col_def in column_defs:
         field = col_def.get("field")
-        effect_field = EPISODE1_DROP_EFFECT_FIELDS.get(field)
+        effect_field = drop_effect_fields.get(field)
         if not effect_field:
             styled_column_defs.append(col_def)
             continue

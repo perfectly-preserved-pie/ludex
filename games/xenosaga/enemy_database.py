@@ -4,15 +4,15 @@ from dash import Input, Output, State, callback, callback_context, dcc, html, no
 from dash_iconify import DashIconify
 from dash.exceptions import PreventUpdate
 from games.xenosaga.helpers import (
+    ALL_DROP_EFFECT_FIELDS,
     apply_element_style,
     build_episode1_item_detail,
     build_column_defs,
-    enrich_episode1_drop_columns,
-    EPISODE1_DROP_EFFECT_FIELDS,
+    enrich_episode_drop_columns,
     format_value,
     load_episode_rows,
     normalize_grid_frame,
-    style_episode1_drop_columns,
+    style_episode_drop_columns,
 )
 from typing import Any
 import dash_ag_grid as dag
@@ -44,11 +44,8 @@ with load_sqlite_database() as conn:
 
 episode_payloads = {}
 for tab_id, frame in episode_frames.items():
-    display_frame = enrich_episode1_drop_columns(frame) if tab_id == "ep1" else frame
-    if tab_id == "ep1":
-        column_defs = style_episode1_drop_columns(build_column_defs(frame))
-    else:
-        column_defs = build_column_defs(frame)
+    display_frame = enrich_episode_drop_columns(frame, tab_id)
+    column_defs = style_episode_drop_columns(build_column_defs(frame), tab_id)
 
     safe_frame = normalize_grid_frame(display_frame)
     episode_payloads[tab_id] = {
@@ -236,12 +233,12 @@ def open_and_populate_modal(
         raise PreventUpdate
 
     enemy_name = selected_row.get("Name", "Enemy Details")
-    hidden_fields = set(EPISODE1_DROP_EFFECT_FIELDS.values())
+    hidden_fields = set(ALL_DROP_EFFECT_FIELDS.values())
     details = {k: v for k, v in selected_row.items() if k != "Name" and k not in hidden_fields}
 
     content = []
     for key, value in details.items():
-        effect_field = EPISODE1_DROP_EFFECT_FIELDS.get(key)
+        effect_field = ALL_DROP_EFFECT_FIELDS.get(key)
         if effect_field:
             content.append(build_episode1_item_detail(key, value, selected_row.get(effect_field)))
             continue

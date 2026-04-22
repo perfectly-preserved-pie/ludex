@@ -22,3 +22,4 @@ htmlcov/
 *.swo
 
 .ipynb_checkpoints/
+.codex
