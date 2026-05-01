@@ -3,6 +3,7 @@ import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 from assets.expedition33.zonelevels_mapping import zones
 from games.expedition33.helpers import build_title_card
+from helpers.ag_grid import default_dash_grid_options, default_grid_column_config
 
 # Dark theme for ag-grid
 # https://www.dash-mantine-components.com/dash-ag-grid#dash-ag-grid-%E2%89%A5-v33
@@ -24,11 +25,11 @@ grid = dag.AgGrid(
         {"field": "name", "headerName": "Zone", "filter": "agTextColumnFilter"},
         {"field": "level", "headerName": "Level", "filter": "agNumberColumnFilter"},
     ],
-    defaultColDef={"filter": True, "sortable": True, "resizable": True},
-    dashGridOptions={
-        "domLayout": "autoHeight", # Fill the height of the grid to fit the number of rows
-        "theme": ag_grid_theme,
-    },
+    **default_grid_column_config(),
+    dashGridOptions=default_dash_grid_options(
+        domLayout="autoHeight", # Fill the height of the grid to fit the number of rows
+        theme=ag_grid_theme,
+    ),
 )
 
 layout = html.Div(

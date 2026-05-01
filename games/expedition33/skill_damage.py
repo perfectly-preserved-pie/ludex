@@ -2,6 +2,7 @@ from __future__ import annotations
 from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
 from dash.exceptions import PreventUpdate
 from games.expedition33.helpers import build_tab_payloads, build_title_card, format_value
+from helpers.ag_grid import AUTO_SIZE_COLUMNS, default_dash_grid_options, default_grid_column_config
 from pathlib import Path
 from typing import Any
 import dash_ag_grid as dag
@@ -39,13 +40,13 @@ grid = dag.AgGrid(
     id="exp33-skill-damage-grid",
     rowData=tab_payloads[default_tab]["rowData"],
     columnDefs=tab_payloads[default_tab]["columnDefs"],
-    defaultColDef={"filter": True, "sortable": True, "resizable": True},
+    **default_grid_column_config(),
     style={"width": "100%", "height": "calc(100vh - 320px)"},
-    dashGridOptions={
-        "theme": ag_grid_theme,
-        "pagination": True,
-        "paginationPageSize": 50,
-    },
+    dashGridOptions=default_dash_grid_options(
+        theme=ag_grid_theme,
+        pagination=True,
+        paginationPageSize=50,
+    ),
 )
 
 modal = dbc.Modal(
@@ -114,21 +115,23 @@ layout = html.Div(
 @callback(
     Output("exp33-skill-damage-grid", "rowData"),
     Output("exp33-skill-damage-grid", "columnDefs"),
+    Output("exp33-skill-damage-grid", "columnSize"),
     Input("exp33-skill-damage-tabs", "active_tab"),
 )
-def update_grid_for_tab(active_tab: str) -> tuple[list[dict], list[dict]]:
+def update_grid_for_tab(active_tab: str) -> tuple[list[dict], list[dict], str]:
     """Swap the skill grid payload when the active tab changes.
 
     Args:
         active_tab: The currently selected character tab id.
 
     Returns:
-        A two-item tuple containing the row data and column definitions for the
-        requested tab, or the default tab if the id is unknown.
+        A three-item tuple containing the row data, column definitions, and
+        column auto-size command for the requested tab, or the default tab if
+        the id is unknown.
     """
 
     payload = tab_payloads.get(active_tab) or tab_payloads[default_tab]
-    return payload["rowData"], payload["columnDefs"]
+    return payload["rowData"], payload["columnDefs"], AUTO_SIZE_COLUMNS
 
 
 @callback(

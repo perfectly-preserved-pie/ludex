@@ -14,6 +14,7 @@ from games.xenosaga.helpers import (
     normalize_grid_frame,
     style_episode_drop_columns,
 )
+from helpers.ag_grid import AUTO_SIZE_COLUMNS, default_dash_grid_options, default_grid_column_config
 from typing import Any
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
@@ -115,12 +116,12 @@ grid = dag.AgGrid(
     id="xenosaga-grid",
     rowData=episode_payloads["ep1"]["rowData"],
     columnDefs=episode_payloads["ep1"]["columnDefs"],
-    defaultColDef={"filter": True, "sortable": True, "resizable": True},
+    **default_grid_column_config(),
     style={"width": "100%", "height": "calc(100vh - 330px)"},
-    dashGridOptions={
-        "theme": ag_grid_theme,
-        "tooltipShowDelay": 150,
-    },
+    dashGridOptions=default_dash_grid_options(
+        theme=ag_grid_theme,
+        tooltipShowDelay=150,
+    ),
 )
 
 modal = dbc.Modal(
@@ -158,21 +159,23 @@ layout = html.Div(
 @callback(
     Output("xenosaga-grid", "rowData"),
     Output("xenosaga-grid", "columnDefs"),
+    Output("xenosaga-grid", "columnSize"),
     Input("xenosaga-tabs", "active_tab"),
 )
-def update_grid_for_episode(active_tab: str) -> tuple[list[dict], list[dict]]:
+def update_grid_for_episode(active_tab: str) -> tuple[list[dict], list[dict], str]:
     """Swap the enemy grid payload when the selected episode changes.
 
     Args:
         active_tab: The id of the currently selected episode tab.
 
     Returns:
-        A two-item tuple containing the row data and column definitions for the
-        chosen episode, or the Episode I payload if the tab is unknown.
+        A three-item tuple containing the row data, column definitions, and
+        column auto-size command for the chosen episode, or the Episode I
+        payload if the tab is unknown.
     """
 
     payload = episode_payloads.get(active_tab) or episode_payloads["ep1"]
-    return payload["rowData"], payload["columnDefs"]
+    return payload["rowData"], payload["columnDefs"], AUTO_SIZE_COLUMNS
 
 
 @callback(
