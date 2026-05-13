@@ -2,6 +2,7 @@
 name = "Ludex"
 version = "0.2.0"
 description = "Game databases, tables, and grids for whatever game I happen to be obssessed with."
+requires-python = ">=3.13"
 #authors = ["Test <w/e@example.com>"]
 license = {text = "MIT"}
 
