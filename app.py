@@ -52,7 +52,7 @@ app = dash.Dash(
     description="An index of resources for various games.",
     external_scripts=[
         {
-            "src": "https://plausible.automateordie.io/js/pa-LPoOV2pIp1B60qeTlaXqj.js",
+            "src": "https://plausible.automateordie.dev/js/pa-LPoOV2pIp1B60qeTlaXqj.js",
             "async": "async",
         }
     ],
