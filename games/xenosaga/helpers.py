@@ -9,6 +9,7 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import html
 from dash_iconify import DashIconify
+from helpers.ag_grid import SET_FILTER_PARAMS, is_set_filter_candidate
 from games.xenosaga.item_effects import (
     get_episode1_item_effect,
     get_episode2_item_effect,
@@ -171,13 +172,15 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
 
     boolean_columns = get_boolean_like_columns(frame)
 
+    text_filter_fields = {"Name"}
     column_defs: list[dict[str, Any]] = []
     for field in frame.columns:
         if field in boolean_columns:
             col_def = {
                 "field": field,
                 "cellDataType": "boolean",
-                "filter": "agTextColumnFilter",
+                "filter": "agSetColumnFilter",
+                "filterParams": SET_FILTER_PARAMS,
             }
             if field == "Name":
                 col_def["pinned"] = "left"
@@ -185,10 +188,25 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
             continue
 
         numeric_col = is_numeric_col(field)
+        set_filter_col = (
+            not numeric_col
+            and is_set_filter_candidate(
+                frame[field],
+                field,
+                excluded_fields=text_filter_fields,
+            )
+        )
+        filter_type = (
+            "agNumberColumnFilter"
+            if numeric_col
+            else "agSetColumnFilter" if set_filter_col else "agTextColumnFilter"
+        )
         col_def: dict[str, Any] = {
             "field": field,
-            "filter": "agNumberColumnFilter" if numeric_col else "agTextColumnFilter",
+            "filter": filter_type,
         }
+        if set_filter_col:
+            col_def["filterParams"] = SET_FILTER_PARAMS
         if numeric_col:
             field_name = json.dumps(field)
             col_def["valueGetter"] = {"function": f"extractRangeStart(params, {field_name})"}
@@ -304,6 +322,7 @@ def apply_element_style(text: str) -> list[Any]:
         "Lightning": "yellow",
         "Fire": "red",
         "Ice": "lightblue",
+        "Beam": "pink",
         "Yes": "green",
         "No": "red",
         "Cannot": "red",

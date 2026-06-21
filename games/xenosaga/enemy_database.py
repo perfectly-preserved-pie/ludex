@@ -116,6 +116,7 @@ grid = dag.AgGrid(
     id="xenosaga-grid",
     rowData=episode_payloads["ep1"]["rowData"],
     columnDefs=episode_payloads["ep1"]["columnDefs"],
+    enableEnterpriseModules=True,
     **default_grid_column_config(),
     style={"width": "100%", "height": "calc(100vh - 330px)"},
     dashGridOptions=default_dash_grid_options(

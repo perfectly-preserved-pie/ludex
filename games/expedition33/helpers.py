@@ -1,7 +1,8 @@
 from __future__ import annotations
 from dash import html
 from dash_iconify import DashIconify
-from pandas.api.types import is_numeric_dtype
+from helpers.ag_grid import SET_FILTER_PARAMS, is_set_filter_candidate
+from pandas.api.types import is_bool_dtype, is_numeric_dtype
 from pathlib import Path
 from typing import Any
 import dash_bootstrap_components as dbc
@@ -125,14 +126,34 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
         A list of ag-grid column definition dictionaries.
     """
 
+    text_filter_fields = {"Skill", "Notes"}
     column_defs: list[dict[str, Any]] = []
     for column in frame.columns:
-        numeric_col = is_numeric_dtype(frame[column])
+        bool_col = is_bool_dtype(frame[column])
+        numeric_col = is_numeric_dtype(frame[column]) and not bool_col
+        set_filter_col = (
+            bool_col
+            or (
+                not numeric_col
+                and is_set_filter_candidate(
+                    frame[column],
+                    column,
+                    excluded_fields=text_filter_fields,
+                )
+            )
+        )
+        filter_type = (
+            "agNumberColumnFilter"
+            if numeric_col
+            else "agSetColumnFilter" if set_filter_col else "agTextColumnFilter"
+        )
         col_def: dict[str, Any] = {
             "field": column,
             "headerName": column,
-            "filter": "agNumberColumnFilter" if numeric_col else "agTextColumnFilter",
+            "filter": filter_type,
         }
+        if set_filter_col:
+            col_def["filterParams"] = SET_FILTER_PARAMS
 
         # custom comparator for the "Game Description" column to sort by difficulty rank instead of alphabetically
         if column == "Game Description":

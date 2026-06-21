@@ -40,6 +40,7 @@ grid = dag.AgGrid(
     id="exp33-skill-damage-grid",
     rowData=tab_payloads[default_tab]["rowData"],
     columnDefs=tab_payloads[default_tab]["columnDefs"],
+    enableEnterpriseModules=True,
     **default_grid_column_config(),
     style={"width": "100%", "height": "calc(100vh - 320px)"},
     dashGridOptions=default_dash_grid_options(
