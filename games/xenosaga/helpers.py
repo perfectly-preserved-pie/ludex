@@ -40,6 +40,18 @@ ALL_DROP_EFFECT_FIELDS = {
     **EPISODE2_DROP_EFFECT_FIELDS,
     **EPISODE3_DROP_EFFECT_FIELDS,
 }
+NUMERIC_FILTER_FIELDS = {
+    "Slow",
+    "Blind",
+    "Heavy",
+    "Weak",
+    "EthPD",
+    "EthDD",
+    "Junk",
+    "ResDw",
+    "Lost",
+    "Curse",
+}
 
 
 def load_episode_rows(connection: sqlite3.Connection, table_name: str) -> pd.DataFrame:
@@ -154,7 +166,7 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
             formatting in ag-grid, otherwise ``False``.
         """
 
-        if is_numeric_dtype(frame[column_name].dtype):
+        if column_name in NUMERIC_FILTER_FIELDS or is_numeric_dtype(frame[column_name].dtype):
             return True
 
         non_na_values = frame[column_name].dropna()
