@@ -41,6 +41,14 @@ ALL_DROP_EFFECT_FIELDS = {
     **EPISODE3_DROP_EFFECT_FIELDS,
 }
 NUMERIC_FILTER_FIELDS = {
+    "Beam",
+    "Aura",
+    "Thunder",
+    "Fire",
+    "Ice",
+    "Pierce",
+    "Slash",
+    "Hit",
     "Slow",
     "Blind",
     "Heavy",
