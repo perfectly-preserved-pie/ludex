@@ -1,10 +1,20 @@
 from __future__ import annotations
-from dash import Input, Output, callback, dcc, html, page_registry, register_page
+
+import re
 from typing import Any
+
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
+from dash import Input, Output, callback, dcc, html, page_registry, register_page
 from dash_iconify import DashIconify
+from flask import Response, redirect, request
+
+
+LEGACY_DASH_CHUNK_PATH = re.compile(
+    r"^/_dash-component-suites/dash/dcc/\d+\.(async-[A-Za-z0-9_-]+\.js(?:\.map)?)$"
+)
+
 
 def build_games_tree() -> list[dict[str, Any]]:
     """Build Mantine tree data from the registered Dash pages.
@@ -62,6 +72,29 @@ app = dash.Dash(
     title="Ludex",
     use_pages=True,
 )
+
+
+@app.server.before_request
+def redirect_legacy_dash_chunk() -> Response | None:
+    """Redirect malformed, ID-prefixed DCC chunk requests to registered files.
+
+    Some clients request Webpack chunk IDs as part of the filename, for example
+    ``113.async-upload.js``. Dash rejects those paths with a noisy 500 response.
+    Only redirect when the corresponding unprefixed file is registered by Dash.
+    """
+    match = LEGACY_DASH_CHUNK_PATH.fullmatch(request.path)
+    if match is None:
+        return None
+
+    filename = match.group(1)
+    registered_path = f"dcc/{filename}"
+    if registered_path not in app.registered_paths.get("dash", set()):
+        return None
+
+    return redirect(
+        f"/_dash-component-suites/dash/{registered_path}",
+        code=307,
+    )
 
 dmc.pre_render_color_scheme()
 
