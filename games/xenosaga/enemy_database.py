@@ -20,7 +20,6 @@ from games.xenosaga.helpers import (
     style_episode_drop_columns,
 )
 from games.xenosaga.seo import (
-    EPISODES,
     XENOSAGA_DESCRIPTION,
     XENOSAGA_SOCIAL_IMAGE_URL,
     XENOSAGA_TITLE,
@@ -150,26 +149,6 @@ modal = dbc.Modal(
 )
 
 
-sources_card = dbc.Card(
-    [
-        html.H2("Sources and methodology", className="h4 card-title"),
-        html.P(
-            "The database was compiled from community enemy guides and normalized "
-            "into searchable tables. Episode I and III data were extracted and "
-            "checked programmatically; Episode II data was transcribed manually."
-        ),
-        html.Ul(
-            [
-                html.Li(html.A(episode["source_label"], href=episode["source_url"]))
-                for episode in EPISODES
-            ]
-        ),
-    ],
-    body=True,
-    className="mt-3 mb-3",
-)
-
-
 layout = html.Div(
     [
         title_card,
@@ -183,7 +162,6 @@ layout = html.Div(
             className="mb-3",
         ),
         grid,
-        sources_card,
         modal,
     ]
 )
