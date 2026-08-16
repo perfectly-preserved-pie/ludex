@@ -1,8 +1,13 @@
 from __future__ import annotations
+
+from typing import Any
+
+import dash_ag_grid as dag
+import dash_bootstrap_components as dbc
 from assets.xenosaga.load_sqlite_database import load_sqlite_database
 from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
-from dash_iconify import DashIconify
 from dash.exceptions import PreventUpdate
+from dash_iconify import DashIconify
 from games.xenosaga.helpers import (
     ALL_DROP_EFFECT_FIELDS,
     apply_element_style,
@@ -14,10 +19,13 @@ from games.xenosaga.helpers import (
     normalize_grid_frame,
     style_episode_drop_columns,
 )
+from games.xenosaga.seo import (
+    EPISODES,
+    XENOSAGA_DESCRIPTION,
+    XENOSAGA_SOCIAL_IMAGE_URL,
+    XENOSAGA_TITLE,
+)
 from helpers.ag_grid import AUTO_SIZE_COLUMNS, default_dash_grid_options, default_grid_column_config
-from typing import Any
-import dash_ag_grid as dag
-import dash_bootstrap_components as dbc
 
 EPISODE_TABS = {
     "ep1": {"label": "Episode I", "table": "episode1"},
@@ -56,14 +64,17 @@ for tab_id, frame in episode_frames.items():
 
 title_card = dbc.Card(
     [
-        html.H3("Xenosaga Enemy Database", className="card-title"),
+        html.H1("Xenosaga Enemy Database", className="card-title"),
         html.I("Mystic powers, grant me a miracle! ✨", style={"margin-bottom": "10px"}),
         html.P(
-            "This is a mobile-friendly searchable, sortable, and filterable table of all enemies in the Xenosaga series, organized by game.",
+            "Browse 325 enemies from Xenosaga Episodes I, II, and III, with HP, "
+            "experience, weaknesses, resistances, item drops, stealable items, "
+            "and other battle statistics.",
             style={"margin-bottom": "0px"},
         ),
         html.P(
-            "Clicking on anywhere on a row will display the selected enemy's stats in a popup.",
+            "Search, sort, or filter any column. Click anywhere on a row to view "
+            "that enemy's complete stats in a popup.",
             style={"margin-bottom": "0px"},
         ),
         html.Div(
@@ -139,6 +150,26 @@ modal = dbc.Modal(
 )
 
 
+sources_card = dbc.Card(
+    [
+        html.H2("Sources and methodology", className="h4 card-title"),
+        html.P(
+            "The database was compiled from community enemy guides and normalized "
+            "into searchable tables. Episode I and III data were extracted and "
+            "checked programmatically; Episode II data was transcribed manually."
+        ),
+        html.Ul(
+            [
+                html.Li(html.A(episode["source_label"], href=episode["source_url"]))
+                for episode in EPISODES
+            ]
+        ),
+    ],
+    body=True,
+    className="mt-3 mb-3",
+)
+
+
 layout = html.Div(
     [
         title_card,
@@ -152,6 +183,7 @@ layout = html.Div(
             className="mb-3",
         ),
         grid,
+        sources_card,
         modal,
     ]
 )
@@ -265,5 +297,8 @@ register_page(
     __name__,
     path="/xenosaga",
     name="Enemy Database",
+    title=XENOSAGA_TITLE,
+    description=XENOSAGA_DESCRIPTION,
+    image_url=XENOSAGA_SOCIAL_IMAGE_URL,
     layout=layout,
 )
