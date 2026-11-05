@@ -12,7 +12,7 @@ dependencies = [
     "dash-bootstrap-components==2.0.4",
     "dash-iconify==0.1.2",
     "dash-mantine-components==2.8.1",
-    "dash==4.4.1",
+    "dash==4.5.0",
     "gunicorn==26.2.0",
     "pandas==3.1.0",
     "loguru==0.7.3",
