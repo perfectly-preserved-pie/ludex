@@ -28,17 +28,23 @@ def test_enemy_grid_sorted_filtered_click_uses_correct_row(page, live_url, episo
     page.goto(live_url + "/xenosaga")
     page.get_by_role("tab", name=episode, exact=True).click()
     grid = page.locator("#xenosaga-grid")
-    cells = grid.locator(".ag-cell[col-id='Name']")
+    episode_id = {"Episode I": "ep1", "Episode II": "ep2", "Episode III": "ep3"}[episode]
+    episode_rows = grid.locator(f".ag-row[row-id^='{episode_id}:']")
+    expect(episode_rows.first).to_be_visible()
+    cells = episode_rows.locator(".ag-cell[col-id='Name']")
     expect(cells.first).to_be_visible()
     grid.locator(".ag-header-cell[col-id='Name'] .ag-header-cell-label").click()
     grid.locator(".ag-header-cell[col-id='Name'] .ag-header-cell-label").click()
     expected = cells.first.inner_text()
+    row_id = cells.first.locator("xpath=ancestor::div[@role='row']").get_attribute("row-id")
     page.evaluate("""async (name) => {
         const api = await dash_ag_grid.getApiAsync('xenosaga-grid');
         api.setFilterModel({Name: {filterType: 'text', type: 'equals', filter: name}});
     }""", expected)
-    expect(cells.first).to_have_text(expected)
-    cells.first.click()
+    row = grid.locator(f".ag-row[row-id='{row_id}']")
+    name_cell = row.locator(".ag-cell[col-id='Name']").first
+    expect(name_cell).to_have_text(expected)
+    name_cell.click()
     modal = page.locator(".modal.show")
     expect(modal.get_by_role("heading", name=expected, exact=True)).to_be_visible()
     expect(modal).not_to_contain_text("_row_id")
@@ -56,8 +62,11 @@ def test_skill_tabs_and_detail_dialog(page, live_url, character):
     expect(grid).not_to_contain_text("Invalid Number")
     grid.locator(".ag-header-cell[col-id='Skill'] .ag-header-cell-label").click()
     expect(grid.locator(".ag-header-cell[col-id='Skill']")).to_have_attribute("aria-sort", "ascending")
-    row_id = grid.locator(".ag-row[row-index='0']").get_attribute("row-id")
-    cell = grid.locator(f".ag-row[row-id='{row_id}'] .ag-cell[col-id='Skill']")
+    active_first_row = grid.locator(
+        f".ag-row[row-id^='{character.lower()}:'][row-index='0']"
+    )
+    expect(active_first_row).to_be_visible()
+    cell = active_first_row.locator(".ag-cell[col-id='Skill']")
     expected = cell.inner_text()
     requests = []
     page.on("request", lambda request: requests.append(request.post_data_json)
