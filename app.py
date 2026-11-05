@@ -11,6 +11,7 @@ import dash_mantine_components as dmc
 from dash import Input, Output, callback, dcc, html, page_registry, register_page
 from dash_iconify import DashIconify
 from flask import Response, has_request_context, redirect, request
+from helpers.seo import SITE_DESCRIPTION, build_social_head_metadata
 from games.xenosaga.seo import (
     SITE_ORIGIN,
     XENOSAGA_DESCRIPTION,
@@ -34,6 +35,21 @@ class LudexDash(dash.Dash):
 
     def interpolate_index(self, **kwargs: str) -> str:
         """Add page-specific server HTML before Dash hydrates the application."""
+
+        if has_request_context() and request.path != XENOSAGA_PATH:
+            page = next(
+                (page for page in page_registry.values() if page.get("path") == request.path),
+                None,
+            )
+            if page is not None:
+                title = page["title"]
+                kwargs["title"] = html_escape(title)
+                kwargs["metas"] = build_social_head_metadata(
+                    kwargs.get("metas", ""),
+                    title=title,
+                    description=page.get("description") or SITE_DESCRIPTION,
+                    path=page["path"],
+                )
 
         if has_request_context() and request.path == XENOSAGA_PATH:
             kwargs["title"] = html_escape(XENOSAGA_TITLE)
@@ -95,7 +111,8 @@ def build_games_tree() -> list[dict[str, Any]]:
 app = LudexDash(
     __name__,
     compress=True,
-    description="An index of resources for various games.",
+    description=SITE_DESCRIPTION,
+    image="social-preview.png",
     external_scripts=[
         {
             "src": "https://plausible.automateordie.dev/js/pa-LPoOV2pIp1B60qeTlaXqj.js",
@@ -381,7 +398,7 @@ def home_layout() -> dbc.Container:
     )
 
 
-register_page("pages.home", path="/", name="Home", layout=home_layout)
+register_page("pages.home", path="/", name="Home", title="Ludex | Game Tools & Reference", description=SITE_DESCRIPTION, layout=home_layout)
 
 app.layout = dmc.MantineProvider(
     dbc.Container(

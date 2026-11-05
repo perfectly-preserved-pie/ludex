@@ -8,5 +8,6 @@ register_page(
     path="/exp33/calculator",
     name="Skill Damage Calculator",
     title="Expedition 33 Skill Damage Calculator",
+    description="Calculate skill damage in Clair Obscur: Expedition 33 with character stats, weapons, Pictos and Luminas. Import a save to load your build.",
     layout=layout,
 )

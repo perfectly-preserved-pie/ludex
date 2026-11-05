@@ -8,6 +8,8 @@ from typing import Any
 import dash_bootstrap_components as dbc
 import pandas as pd
 
+MIXED_TEXT_COLUMNS = {"Cost", "Skill Points Cost"}
+
 
 def build_title_card(title: str, subtitle: str = "For those who come after.") -> dbc.Card:
     """Build the shared Expedition 33 title card.
@@ -135,6 +137,7 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
             bool_col
             or (
                 not numeric_col
+                and column not in MIXED_TEXT_COLUMNS
                 and is_set_filter_candidate(
                     frame[column],
                     column,
@@ -192,6 +195,22 @@ def format_value(value: Any) -> str:
         return str(value)
 
 
+def normalize_mixed_numeric_text(value: Any) -> str | None:
+    """Render numeric labels consistently while preserving text labels."""
+
+    if value is None or pd.isna(value):
+        return None
+    if isinstance(value, str):
+        text = value.strip()
+        try:
+            number = float(text)
+        except ValueError:
+            return text
+    else:
+        number = float(value)
+    return str(int(number)) if number.is_integer() else format(number, "g")
+
+
 def build_tab_payloads(tab_config: list[dict[str, str]], csv_dir: Path) -> dict[str, dict[str, Any]]:
     """Load row and column payloads for each tabbed CSV view.
 
@@ -217,6 +236,20 @@ def build_tab_payloads(tab_config: list[dict[str, str]], csv_dir: Path) -> dict[
                 frame["Damage Multi"].replace("-", pd.NA),
                 errors="raise",
             )
+        for column in ("Cost", "Skill Points Cost"):
+            if column in frame.columns:
+                # These columns mix numbers with labels such as "2 GC" and
+                # acquisition notes. Keep them text in every character tab so
+                # AG Grid never carries a numeric type into the next tab.
+                frame[column] = frame[column].map(normalize_mixed_numeric_text)
+        if "AOE" in frame.columns:
+            frame["AOE"] = frame["AOE"].map(
+                lambda value: (
+                    {"true": True, "false": False}.get(str(value).strip().lower())
+                    if pd.notna(value)
+                    else None
+                )
+            ).astype("boolean")
         safe_frame = frame.astype(object).where(pd.notnull(frame), None)
         payloads[tab_id] = {
             "rowData": safe_frame.to_dict("records"),

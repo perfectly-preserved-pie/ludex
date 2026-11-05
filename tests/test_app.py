@@ -1,6 +1,8 @@
 import gzip
 import json
 import re
+import struct
+from html.parser import HTMLParser
 from xml.etree import ElementTree
 
 import pytest
@@ -23,6 +25,53 @@ def test_xenosaga_has_crawlable_data_and_canonical_metadata(client):
     redirect = client.get("/xenosaga/?search=gnosis")
     assert redirect.status_code == 308
     assert redirect.location == "/xenosaga?search=gnosis"
+
+
+class HeadParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.metas = {}
+        self.canonicals = []
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "meta":
+            key = attrs.get("name") or attrs.get("property")
+            self.metas.setdefault(key, []).append(attrs.get("content"))
+        if tag == "link" and attrs.get("rel") == "canonical":
+            self.canonicals.append(attrs["href"])
+
+
+@pytest.mark.parametrize("path, title", [
+    ("/", "Ludex | Game Tools & Reference"),
+    ("/xenosaga", "Xenosaga Enemy Database: Stats, Weaknesses & Drops | Ludex"),
+    ("/exp33/skilldamage", "Expedition 33 Skill Damage Reference | Ludex"),
+    ("/exp33/zonelevels", "Expedition 33 Zone Levels | Ludex"),
+    ("/exp33/calculator", "Expedition 33 Skill Damage Calculator"),
+])
+def test_social_card_in_initial_html(client, path, title):
+    # Preview clients need complete tags without executing Dash's JavaScript.
+    response = client.get(path + "?utm_source=imessage", base_url="https://proxy.example", headers={"User-Agent": "facebookexternalhit/1.1"})
+    head = HeadParser()
+    head.feed(response.text.split("</head>", 1)[0])
+    image = "https://ludex.games/assets/social-preview.png"
+    assert head.canonicals == [f"https://ludex.games{path}"]
+    assert head.metas["og:url"] == head.metas["twitter:url"] == head.canonicals
+    assert head.metas["og:title"] == head.metas["twitter:title"] == [title]
+    assert head.metas["og:image"] == head.metas["twitter:image"] == [image]
+    assert head.metas["og:image:width"] == ["1200"]
+    assert head.metas["og:image:height"] == ["630"]
+    assert head.metas["twitter:card"] == ["summary_large_image"]
+    assert head.metas["description"] == head.metas["og:description"] == head.metas["twitter:description"]
+    assert head.metas["description"][0]
+
+
+def test_social_card_image_is_public_png(client):
+    response = client.get("/assets/social-preview.png")
+    assert response.status_code == 200
+    assert response.mimetype == "image/png"
+    assert response.data[:8] == b"\x89PNG\r\n\x1a\n"
+    assert struct.unpack(">II", response.data[16:24]) == (1200, 630)
 
 
 def test_sitemap_matches_registered_pages(client, dash_app):

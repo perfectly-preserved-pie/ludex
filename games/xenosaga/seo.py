@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import html
 import json
-import re
 import sqlite3
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from helpers.seo import SITE_ORIGIN, SOCIAL_IMAGE_URL, build_social_head_metadata
 
-SITE_ORIGIN = "https://ludex.games"
 XENOSAGA_PATH = "/xenosaga"
 XENOSAGA_URL = f"{SITE_ORIGIN}{XENOSAGA_PATH}"
 XENOSAGA_TITLE = "Xenosaga Enemy Database: Stats, Weaknesses & Drops | Ludex"
@@ -17,9 +16,7 @@ XENOSAGA_DESCRIPTION = (
     "Search all 325 enemies from Xenosaga Episodes I, II and III. Compare HP, "
     "weaknesses, resistances, EXP, drops, stealable items and boss stats."
 )
-XENOSAGA_SOCIAL_IMAGE_URL = (
-    f"{SITE_ORIGIN}/assets/favicon/web-app-manifest-512x512.png"
-)
+XENOSAGA_SOCIAL_IMAGE_URL = SOCIAL_IMAGE_URL
 
 DATABASE_PATH = Path(__file__).resolve().parents[2] / "assets" / "xenosaga" / "xenosaga.db"
 
@@ -242,36 +239,16 @@ def build_xenosaga_json_ld() -> str:
 def build_xenosaga_head_metadata(existing_metas: str) -> str:
     """Replace Dash's generic social metadata with Xenosaga-specific tags."""
 
-    meta_pattern = re.compile(
-        r'\s*<meta\s+(?:name|property)="(?:description|robots|twitter:[^"]+|og:[^"]+)"[^>]*>',
-        flags=re.IGNORECASE,
+    social_metadata = build_social_head_metadata(
+        existing_metas,
+        title=XENOSAGA_TITLE,
+        description=XENOSAGA_DESCRIPTION,
+        path=XENOSAGA_PATH,
     )
-    cleaned_metas = meta_pattern.sub("", existing_metas).strip()
-    description = html.escape(XENOSAGA_DESCRIPTION, quote=True)
-    title = html.escape(XENOSAGA_TITLE, quote=True)
-    canonical_url = html.escape(XENOSAGA_URL, quote=True)
-    image_url = html.escape(XENOSAGA_SOCIAL_IMAGE_URL, quote=True)
-
     page_tags = (
-        f'<meta name="description" content="{description}">'
         '<meta name="robots" content="index,follow,max-image-preview:large">'
-        f'<meta property="og:title" content="{title}">'
-        '<meta property="og:type" content="website">'
-        '<meta property="og:site_name" content="Ludex">'
-        f'<meta property="og:url" content="{canonical_url}">'
-        f'<meta property="og:description" content="{description}">'
-        f'<meta property="og:image" content="{image_url}">'
-        '<meta property="og:image:width" content="512">'
-        '<meta property="og:image:height" content="512">'
-        '<meta property="og:image:alt" content="Ludex">'
-        '<meta name="twitter:card" content="summary">'
-        f'<meta name="twitter:title" content="{title}">'
-        f'<meta name="twitter:description" content="{description}">'
-        f'<meta name="twitter:image" content="{image_url}">'
-        '<meta name="twitter:image:alt" content="Ludex">'
-        f'<link rel="canonical" href="{canonical_url}">'
         '<script type="application/ld+json">'
         f"{build_xenosaga_json_ld()}"
         "</script>"
     )
-    return f"{cleaned_metas}\n      {page_tags}"
+    return f"{social_metadata}\n      {page_tags}"

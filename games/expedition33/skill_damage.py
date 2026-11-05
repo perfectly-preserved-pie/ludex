@@ -195,6 +195,7 @@ register_page(
     __name__,
     path="/exp33/skilldamage",
     name="Skill Damage",
-    title="Skill Damage",
+    title="Expedition 33 Skill Damage Reference | Ludex",
+    description="Browse skill damage, hit counts and scaling for all six characters in Clair Obscur: Expedition 33.",
     layout=layout,
 )

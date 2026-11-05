@@ -61,4 +61,11 @@ layout = html.Div(
 )
 
 from dash import register_page
-register_page(__name__, path="/exp33/zonelevels", name="Zone Levels", layout=layout)
+register_page(
+    __name__,
+    path="/exp33/zonelevels",
+    name="Zone Levels",
+    title="Expedition 33 Zone Levels | Ludex",
+    description="Look up recommended zone levels in Clair Obscur: Expedition 33 to plan where to explore next.",
+    layout=layout,
+)

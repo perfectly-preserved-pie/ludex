@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="background" x2="1" y2="1">
+      <stop stop-color="#e9e4f5"/>
+      <stop offset="1" stop-color="#c9c0ee"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#64637b" stroke-opacity=".08"/>
+    </pattern>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#433035" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <g font-family="DejaVu Sans, sans-serif" fill="#433035">
+    <text x="68" y="88" font-size="18" font-weight="bold" letter-spacing="3">THE GAME INDEX</text>
+    <text x="58" y="273" font-size="148" font-weight="bold" letter-spacing="-9">Ludex</text>
+    <g font-size="29" fill="#585064">
+      <text x="68" y="340">Game databases, calculators</text>
+      <text x="68" y="383">&amp; reference pages.</text>
+    </g>
+    <path d="M68 441H142" stroke="#71618f" stroke-width="4"/>
+    <text x="68" y="545" font-size="23" font-weight="bold">ludex.games</text>
+    <g filter="url(#shadow)">
+      <rect x="683" y="107" width="447" height="398" rx="22" fill="#f8f6fc"/>
+    </g>
+    <path d="M705 107H1108Q1130 107 1130 129V173H683V129Q683 107 705 107" fill="#433b52"/>
+    <g fill="#c9c0ee">
+      <circle cx="711" cy="140" r="5"/>
+      <circle cx="730" cy="140" r="5"/>
+      <circle cx="749" cy="140" r="5"/>
+    </g>
+    <text x="1098" y="146" text-anchor="end" font-size="13" font-weight="bold" letter-spacing="2" fill="#e9e4f5">INDEX / 02</text>
+    <g fill="#82768e" font-size="15" font-weight="bold" letter-spacing="2">
+      <text x="717" y="220">01</text>
+      <text x="717" y="363">02</text>
+    </g>
+    <text x="717" y="262" font-size="33" font-weight="bold">Xenosaga</text>
+    <text x="717" y="294" font-size="17" fill="#6d6277">Enemy database · Episodes I–III</text>
+    <path d="M717 322H1096" stroke="#e1dbe9"/>
+    <text x="717" y="405" font-size="29" font-weight="bold">Clair Obscur</text>
+    <text x="717" y="436" font-size="22" fill="#6d6277">Expedition 33</text>
+    <text x="717" y="471" font-size="16" fill="#6d6277">Damage calculator · Skills · Zone levels</text>
+  </g>
+</svg>
