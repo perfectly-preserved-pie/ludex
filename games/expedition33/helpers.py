@@ -151,6 +151,9 @@ def build_column_defs(frame: pd.DataFrame) -> list[dict[str, Any]]:
             "field": column,
             "headerName": column,
             "filter": filter_type,
+            # A reused field can change type between character sheets. Do not
+            # retain AG Grid's initial inference when replacing columnDefs.
+            "cellDataType": "boolean" if bool_col else "number" if numeric_col else "text",
         }
         if set_filter_col:
             col_def["filterParams"] = SET_FILTER_PARAMS
@@ -206,6 +209,14 @@ def build_tab_payloads(tab_config: list[dict[str, str]], csv_dir: Path) -> dict[
         tab_id = tab["tab_id"]
         csv_path = csv_dir / f"{tab_id}.csv"
         frame = clean_frame(pd.read_csv(csv_path))
+        if "Damage Multi" in frame.columns:
+            # Monoco and Verso use text-form numbers and `-` placeholders in
+            # their exports. Normalize them before AG Grid assigns numeric
+            # cell types, or switching tabs can show every value as invalid.
+            frame["Damage Multi"] = pd.to_numeric(
+                frame["Damage Multi"].replace("-", pd.NA),
+                errors="raise",
+            )
         safe_frame = frame.astype(object).where(pd.notnull(frame), None)
         payloads[tab_id] = {
             "rowData": safe_frame.to_dict("records"),

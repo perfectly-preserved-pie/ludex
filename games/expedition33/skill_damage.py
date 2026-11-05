@@ -1,8 +1,8 @@
 from __future__ import annotations
-from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
+from dash import Input, Output, callback, callback_context, dcc, html, no_update, register_page
 from dash.exceptions import PreventUpdate
 from games.expedition33.helpers import build_tab_payloads, build_title_card, format_value
-from helpers.ag_grid import AUTO_SIZE_COLUMNS, default_dash_grid_options, default_grid_column_config
+from helpers.ag_grid import AUTO_SIZE_COLUMNS, default_dash_grid_options, default_grid_column_config, index_grid_rows
 from pathlib import Path
 from typing import Any
 import dash_ag_grid as dag
@@ -34,10 +34,12 @@ ag_grid_theme = {
 }
 
 tab_payloads = build_tab_payloads(TAB_CONFIG, CSV_DIR)
+rows_by_id = index_grid_rows(tab_payloads)
 default_tab = TAB_CONFIG[0]["tab_id"]
 
 grid = dag.AgGrid(
     id="exp33-skill-damage-grid",
+    getRowId="params.data._row_id",
     rowData=tab_payloads[default_tab]["rowData"],
     columnDefs=tab_payloads[default_tab]["columnDefs"],
     enableEnterpriseModules=True,
@@ -141,15 +143,11 @@ def update_grid_for_tab(active_tab: str) -> tuple[list[dict], list[dict], str]:
     Output("exp33-skill-damage-modal-content", "children"),
     Input("exp33-skill-damage-grid", "cellClicked"),
     Input("exp33-skill-damage-close", "n_clicks"),
-    State("exp33-skill-damage-modal", "is_open"),
-    State("exp33-skill-damage-grid", "virtualRowData"),
     prevent_initial_call=True,
 )
 def open_and_populate_modal(
     cell_clicked_data: dict[str, Any] | None,
     _close_btn_clicks: int | None,
-    _modal_open: bool,
-    virtual_row_data: list[dict[str, Any]] | None,
 ) -> tuple[bool, Any, Any]:
     """Open the skill detail modal for the clicked grid row.
 
@@ -158,10 +156,6 @@ def open_and_populate_modal(
             cell.
         _close_btn_clicks: The close button click count. It is unused beyond
             triggering the callback.
-        _modal_open: The current modal state. It is unused because the callback
-            always recomputes the next state.
-        virtual_row_data: The currently visible grid rows, used as a fallback
-            lookup when the click payload omits the row data.
 
     Returns:
         A tuple of ``(is_open, header_children, body_children)`` for the modal.
@@ -178,21 +172,13 @@ def open_and_populate_modal(
     if trigger_id != "exp33-skill-damage-grid" or not cell_clicked_data:
         raise PreventUpdate
 
-    selected_row = cell_clicked_data.get("data")
-    row_index = cell_clicked_data.get("rowIndex")
-    if (
-        selected_row is None
-        and isinstance(row_index, int)
-        and virtual_row_data
-        and 0 <= row_index < len(virtual_row_data)
-    ):
-        selected_row = virtual_row_data[row_index]
+    selected_row = rows_by_id.get(str(cell_clicked_data.get("rowId")))
 
     if not selected_row:
         raise PreventUpdate
 
     skill_name = format_modal_value(selected_row.get("Skill")) or "Skill Details"
-    details = {k: v for k, v in selected_row.items() if k != "Skill"}
+    details = {k: v for k, v in selected_row.items() if k not in {"Skill", "_row_id"}}
 
     content = [
         html.Div(

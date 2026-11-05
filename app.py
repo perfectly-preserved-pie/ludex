@@ -25,6 +25,9 @@ LEGACY_DASH_CHUNK_PATH = re.compile(
     r"^/_dash-component-suites/dash/dcc/\d+\.(async-[A-Za-z0-9_-]+\.js(?:\.map)?)$"
 )
 
+# Mantine Components 3 requires React 19 (Dash 4.5 still defaults to React 18).
+dash._dash_renderer._set_react_version("19.2.4")
+
 
 class LudexDash(dash.Dash):
     """Dash application with crawlable first-response content for key pages."""
@@ -37,6 +40,10 @@ class LudexDash(dash.Dash):
             kwargs["metas"] = build_xenosaga_head_metadata(kwargs.get("metas", ""))
             kwargs["app_entry"] = (
                 '<div id="react-entry-point">'
+                '<div id="xenosaga-startup-screen" role="status" aria-live="polite">'
+                '<span class="xenosaga-startup-spinner" aria-hidden="true"></span>'
+                "Loading the interactive enemy database…"
+                "</div>"
                 f"{build_xenosaga_static_html()}"
                 "</div>"
             )
@@ -87,6 +94,7 @@ def build_games_tree() -> list[dict[str, Any]]:
 # create the Dash app with the builtin pages support
 app = LudexDash(
     __name__,
+    compress=True,
     description="An index of resources for various games.",
     external_scripts=[
         {
@@ -100,6 +108,9 @@ app = LudexDash(
     title="Ludex",
     use_pages=True,
 )
+
+# A 10 MiB save expands to about 13.4 MiB in Dash's base64 JSON upload.
+app.server.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 
 def crawler_response(body: str, mimetype: str) -> Response:
@@ -224,11 +235,55 @@ dmc.pre_render_color_scheme()
 def add_document_language(app_index: str) -> str:
     """Declare the document language after Mantine decorates the HTML tag."""
 
-    return app_index.replace(
+    app_index = app_index.replace(
         "<html data-mantine-color-scheme=",
         '<html lang="en" data-mantine-color-scheme=',
         1,
     )
+    if has_request_context() and request.path == XENOSAGA_PATH:
+        startup_handoff = """<style>
+            #xenosaga-startup-screen { display: none; }
+            html.ludex-xenosaga-loading #xenosaga-static-content { display: none !important; }
+            html.ludex-xenosaga-loading #xenosaga-startup-screen {
+                align-items: center;
+                display: flex;
+                gap: .75rem;
+                justify-content: center;
+                min-height: 55vh;
+                color: #495057;
+                font: 1rem system-ui, sans-serif;
+            }
+            .xenosaga-startup-spinner {
+                animation: ludex-spin .8s linear infinite;
+                border: 3px solid #dee2e6;
+                border-top-color: #0d6efd;
+                border-radius: 50%;
+                height: 1.25rem;
+                width: 1.25rem;
+            }
+            @keyframes ludex-spin { to { transform: rotate(360deg); } }
+        </style>
+        <script>
+            (() => {
+                const className = "ludex-xenosaga-loading";
+                document.documentElement.classList.add(className);
+                const finish = () => {
+                    if (document.querySelector("#xenosaga-grid")) {
+                        document.documentElement.classList.remove(className);
+                        observer.disconnect();
+                        clearTimeout(fallback);
+                    }
+                };
+                const observer = new MutationObserver(finish);
+                observer.observe(document.documentElement, {childList: true, subtree: true});
+                const fallback = setTimeout(() => {
+                    document.documentElement.classList.remove(className);
+                    observer.disconnect();
+                }, 10000);
+            })();
+        </script>"""
+        app_index = app_index.replace("</head>", f"{startup_handoff}</head>", 1)
+    return app_index
 
 
 def home_layout() -> dbc.Container:
@@ -326,7 +381,7 @@ def home_layout() -> dbc.Container:
     )
 
 
-register_page(__name__, path="/", name="Home", layout=home_layout)
+register_page("pages.home", path="/", name="Home", layout=home_layout)
 
 app.layout = dmc.MantineProvider(
     dbc.Container(

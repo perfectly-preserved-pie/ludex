@@ -5,7 +5,7 @@ from typing import Any
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 from assets.xenosaga.load_sqlite_database import load_sqlite_database
-from dash import Input, Output, State, callback, callback_context, dcc, html, no_update, register_page
+from dash import Input, Output, callback, callback_context, dcc, html, no_update, register_page
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
 from games.xenosaga.helpers import (
@@ -24,7 +24,7 @@ from games.xenosaga.seo import (
     XENOSAGA_SOCIAL_IMAGE_URL,
     XENOSAGA_TITLE,
 )
-from helpers.ag_grid import AUTO_SIZE_COLUMNS, default_dash_grid_options, default_grid_column_config
+from helpers.ag_grid import AUTO_SIZE_COLUMNS, default_dash_grid_options, default_grid_column_config, index_grid_rows
 
 EPISODE_TABS = {
     "ep1": {"label": "Episode I", "table": "episode1"},
@@ -60,6 +60,8 @@ for tab_id, frame in episode_frames.items():
         "rowData": safe_frame.to_dict("records"),
         "columnDefs": column_defs,
     }
+
+rows_by_id = index_grid_rows(episode_payloads)
 
 title_card = dbc.Card(
     [
@@ -124,6 +126,7 @@ title_card = dbc.Card(
 
 grid = dag.AgGrid(
     id="xenosaga-grid",
+    getRowId="params.data._row_id",
     rowData=episode_payloads["ep1"]["rowData"],
     columnDefs=episode_payloads["ep1"]["columnDefs"],
     enableEnterpriseModules=True,
@@ -131,6 +134,9 @@ grid = dag.AgGrid(
     style={"width": "100%", "height": "calc(100vh - 330px)"},
     dashGridOptions=default_dash_grid_options(
         theme=ag_grid_theme,
+        # Dash's columnSize callback can run before the grid finishes its first
+        # render. Let AG Grid size the initial episode when its first rows land.
+        autoSizeStrategy={"type": "fitCellContents"},
         tooltipShowDelay=150,
     ),
 )
@@ -195,15 +201,11 @@ def update_grid_for_episode(active_tab: str) -> tuple[list[dict], list[dict], st
     Output("xenosaga-modal-content", "children"),
     Input("xenosaga-grid", "cellClicked"),
     Input("xenosaga-close", "n_clicks"),
-    State("xenosaga-modal", "is_open"),
-    State("xenosaga-grid", "virtualRowData"),
     prevent_initial_call=True,
 )
 def open_and_populate_modal(
     cell_clicked_data: dict[str, Any] | None,
     close_btn_clicks: int | None,
-    modal_open: bool,
-    virtual_row_data: list[dict[str, Any]] | None,
 ) -> tuple[bool, Any, Any]:
     """Open or close the enemy detail modal based on user interaction.
 
@@ -212,10 +214,6 @@ def open_and_populate_modal(
             enemy row.
         close_btn_clicks: The close button click count. It is only used as a
             callback trigger.
-        modal_open: The current modal state. It is unused because the callback
-            computes a fresh state each time.
-        virtual_row_data: The visible grid rows, used as a fallback lookup when
-            the click payload omits row data.
 
     Returns:
         A tuple of ``(is_open, header_children, body_children)`` for the modal.
@@ -233,21 +231,13 @@ def open_and_populate_modal(
     if trigger_id != "xenosaga-grid" or not cell_clicked_data:
         raise PreventUpdate
 
-    selected_row = cell_clicked_data.get("data")
-    row_index = cell_clicked_data.get("rowIndex")
-    if (
-        selected_row is None
-        and isinstance(row_index, int)
-        and virtual_row_data
-        and 0 <= row_index < len(virtual_row_data)
-    ):
-        selected_row = virtual_row_data[row_index]
+    selected_row = rows_by_id.get(str(cell_clicked_data.get("rowId")))
 
     if not selected_row:
         raise PreventUpdate
 
     enemy_name = selected_row.get("Name", "Enemy Details")
-    hidden_fields = set(ALL_DROP_EFFECT_FIELDS.values())
+    hidden_fields = {"_row_id", *ALL_DROP_EFFECT_FIELDS.values()}
     details = {k: v for k, v in selected_row.items() if k != "Name" and k not in hidden_fields}
 
     content = []

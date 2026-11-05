@@ -6,6 +6,22 @@ AUTO_SIZE_COLUMNS = "autoSize"
 SET_FILTER_PARAMS = {"buttons": ["reset", "apply"], "closeOnApply": True}
 
 
+def index_grid_rows(payloads: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Assign stable IDs across tabs and index server-owned rows for detail clicks.
+
+    AG Grid reports rowId even after sorting, filtering, and pagination. Looking
+    it up avoids uploading virtualRowData with every click or trusting row data
+    supplied by the browser. Payloads are prepared once during page import.
+    """
+    rows_by_id: dict[str, dict[str, Any]] = {}
+    for tab_id, payload in payloads.items():
+        for index, row in enumerate(payload["rowData"]):
+            row_id = f"{tab_id}:{index}"
+            row["_row_id"] = row_id
+            rows_by_id[row_id] = row
+    return rows_by_id
+
+
 def is_set_filter_candidate(
     values: Any,
     field: str,

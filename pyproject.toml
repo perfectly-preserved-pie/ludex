@@ -11,9 +11,23 @@ dependencies = [
     "dash-ag-grid==35.3.0",
     "dash-bootstrap-components==2.0.4",
     "dash-iconify==0.1.2",
-    "dash-mantine-components==2.8.1",
-    "dash==4.4.1",
+    "dash-mantine-components==3.0.0",
+    "dash[compress]==4.5.0",
     "gunicorn==26.2.0",
-    "pandas==3.1.0",
+    "pandas==3.1.1",
     "loguru==0.7.3",
+    "orjson==3.13.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pip-audit==2.10.1",
+    "playwright==1.64.1",
+    "pytest==9.2.0",
+]
+
+[tool.pytest.ini_options]
+addopts = "-p no:dash"
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["browser: browser integration tests (enable with --run-browser)"]

@@ -3,7 +3,7 @@ COPY --from=dhi.io/uv:0.10-dev /usr/local/bin/uv /usr/local/bin/uv
 
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen
+RUN uv sync --frozen --no-dev
 
 COPY . /app
 
