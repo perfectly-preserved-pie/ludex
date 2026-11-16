@@ -1,5 +1,5 @@
 FROM dhi.io/python:3.13-sfw-dev AS builder
-COPY --from=dhi.io/uv:0.10-dev /usr/local/bin/uv /usr/local/bin/uv
+COPY --from=dhi.io/uv:0.13-dev /usr/local/bin/uv /usr/local/bin/uv
 
 WORKDIR /app
 COPY pyproject.toml uv.lock ./

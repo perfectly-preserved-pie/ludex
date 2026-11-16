@@ -117,7 +117,11 @@ app = LudexDash(
         {
             "src": "https://plausible.automateordie.dev/js/pa-LPoOV2pIp1B60qeTlaXqj.js",
             "async": "async",
-        }
+        },
+        {
+            "src": "/analytics/script.js?siteId=63c3e597eb6d",
+            "defer": "defer",
+        },
     ],
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     pages_folder="games",
