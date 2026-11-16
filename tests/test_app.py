@@ -113,6 +113,15 @@ def test_all_index_script_bundles_are_registered(client):
         assert bundle.mimetype in {"text/javascript", "application/javascript"}
 
 
+def test_analytics_script_without_reverse_proxy(client):
+    response = client.get("/analytics/script.js?siteId=63c3e597eb6d")
+    assert response.status_code == 200
+    assert response.mimetype == "text/javascript"
+    assert response.text.startswith("//")
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+
+
 def test_legacy_chunk_redirects_only_registered_files(client, dash_app):
     paths = dash_app.registered_paths["dash"]
     chunk = next(path for path in paths if path.startswith("dcc/async-") and path.endswith(".js"))

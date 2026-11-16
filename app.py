@@ -134,6 +134,18 @@ app = LudexDash(
 app.server.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 
+@app.server.get("/analytics/script.js")
+def analytics_script_fallback() -> Response:
+    """Serve valid JavaScript when the deployment's analytics proxy is absent."""
+
+    # Production's reverse proxy serves the tracker before requests reach Dash.
+    # Locally, avoid Dash's HTML catch-all being parsed as a JavaScript bundle.
+    response = Response("// Analytics proxy is unavailable.\n", mimetype="text/javascript")
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 def crawler_response(body: str, mimetype: str) -> Response:
     """Return a cacheable crawler resource with an explicit content type."""
 
