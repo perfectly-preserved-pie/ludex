@@ -116,3 +116,54 @@ def test_calculator_updates_and_rejects_invalid_save(page, live_url):
     status = page.locator("#exp33-calculator-save-import-status")
     expect(status).to_be_visible()
     expect(status).to_contain_text(re.compile("could not be parsed|could not be imported", re.I))
+
+
+def test_rybbit_calculator_and_xenosaga_events(page, live_url):
+    page.route("**/analytics/script.js?*", lambda route: route.fulfill(content_type="application/javascript", body=""))
+    page.route("https://plausible.automateordie.dev/**", lambda route: route.fulfill(content_type="application/javascript", body=""))
+    page.add_init_script("""window.analyticsEvents = [];
+        window.rybbit = {event: (name, props) => window.analyticsEvents.push({name, props})};""")
+    page.goto(live_url + "/exp33/calculator")
+    result = page.locator("#exp33-calculator-result-body")
+    expect(result.get_by_role("heading", name="Lightning Dance", exact=True)).to_be_visible()
+    assert page.evaluate("window.analyticsEvents") == []
+    attack = page.locator("#exp33-calculator-attack")
+    attack.fill("2000")
+    attack.press("Tab")
+    expect(result.get_by_role("heading", name="7,200", exact=True)).to_be_visible()
+    page.wait_for_function("analyticsEvents.some(e => e.name === 'calculator_used')")
+    attack.fill("1000")
+    attack.press("Tab")
+    expect(result.get_by_role("heading", name="3,600", exact=True)).to_be_visible()
+    assert page.evaluate("analyticsEvents.filter(e => e.name === 'calculator_used').length") == 1
+    page.locator("#exp33-calculator-save-upload input[type=file]").set_input_files({
+        "name": "private-name.sav", "mimeType": "application/octet-stream", "buffer": b"invalid",
+    })
+    page.wait_for_function("analyticsEvents.some(e => e.name === 'save_import_failed')")
+    assert "private-name" not in str(page.evaluate("analyticsEvents"))
+    # Exercise the successful response contract without uploading a real save.
+    page.evaluate("""dash_clientside.set_props('exp33-calculator-save-import-status', {
+        children: 'Imported a save.', color: 'info', is_open: true
+    })""")
+    page.wait_for_function("analyticsEvents.some(e => e.name === 'save_import_succeeded')")
+
+    page.goto(live_url + "/xenosaga")
+    grid = page.locator("#xenosaga-grid")
+    expect(grid.locator(".ag-row").first).to_be_visible()
+    assert page.evaluate("analyticsEvents") == []
+    page.get_by_role("tab", name="Episode II", exact=True).click()
+    page.wait_for_function("analyticsEvents.some(e => e.name === 'xenosaga_episode_selected')")
+    expect(grid.locator(".ag-row[row-id^='ep2:']").first).to_be_visible()
+    grid.locator(".ag-cell[col-id='Name']").first.click()
+    page.wait_for_function("analyticsEvents.some(e => e.name === 'xenosaga_enemy_details_opened')")
+    page.locator("#xenosaga-close").click()
+    page.evaluate("""async () => {
+        const api = await dash_ag_grid.getApiAsync('xenosaga-grid');
+        api.setFilterModel({Name: {filterType: 'text', type: 'contains', filter: 'a'}});
+    }""")
+    page.wait_for_function("analyticsEvents.some(e => e.name === 'xenosaga_table_filtered')")
+    # An unavailable tracker must not break the interaction callback.
+    page.evaluate("""() => {
+        delete window.rybbit;
+        dash_clientside.analytics.saveImport(null, 'danger', true);
+    }""")

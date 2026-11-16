@@ -12,6 +12,7 @@ from dash import Input, Output, callback, dcc, html, page_registry, register_pag
 from dash_iconify import DashIconify
 from flask import Response, has_request_context, redirect, request
 from helpers.seo import SITE_DESCRIPTION, build_social_head_metadata
+from helpers.analytics import ANALYTICS_STORES, register_analytics
 from games.xenosaga.seo import (
     SITE_ORIGIN,
     XENOSAGA_DESCRIPTION,
@@ -419,6 +420,7 @@ register_page("pages.home", path="/", name="Home", title="Ludex | Game Tools & R
 app.layout = dmc.MantineProvider(
     dbc.Container(
         [
+            *ANALYTICS_STORES,
             dbc.Row(
                 dbc.Col(
                     html.Div(
@@ -479,6 +481,8 @@ def navigate_from_tree(selected: list[str] | None) -> str:
         raise dash.exceptions.PreventUpdate
 
     return value
+
+register_analytics(app)
 
 # For Gunicorn
 server = app.server
