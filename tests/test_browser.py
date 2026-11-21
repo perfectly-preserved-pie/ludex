@@ -10,6 +10,13 @@ pytestmark = pytest.mark.browser
 def test_home_tree_navigation_and_theme(page, live_url):
     page.goto(live_url)
     expect(page.get_by_role("heading", name="Ludex", exact=True)).to_be_visible()
+    document_requests = []
+
+    def track_document_request(request):
+        if request.resource_type == "document":
+            document_requests.append(request.url)
+
+    page.on("request", track_document_request)
     scheme = page.locator("html").get_attribute("data-mantine-color-scheme")
     page.locator("#theme-toggle").click()
     expect(page.locator("html")).not_to_have_attribute("data-mantine-color-scheme", scheme)
@@ -21,6 +28,7 @@ def test_home_tree_navigation_and_theme(page, live_url):
     page.get_by_text("Enemy Database", exact=True).click()
     expect(page).to_have_url(live_url + "/xenosaga")
     expect(page.locator("#xenosaga-grid .ag-cell[col-id='Name']").first).to_be_visible()
+    assert document_requests == []
 
 
 @pytest.mark.parametrize("episode", ["Episode I", "Episode II", "Episode III"])
@@ -167,3 +175,19 @@ def test_rybbit_calculator_and_xenosaga_events(page, live_url):
         delete window.rybbit;
         dash_clientside.analytics.saveImport(null, 'danger', true);
     }""")
+
+
+def test_xenosaga_is_readable_without_javascript(browser, live_url):
+    context = browser.new_context(java_script_enabled=False)
+    try:
+        page = context.new_page()
+        response = page.goto(live_url)
+        assert response.status == 200
+        page.get_by_role("link", name="Xenosaga Enemy Database", exact=False).click()
+        expect(page).to_have_url(f"{live_url}/xenosaga")
+        expect(page.get_by_role("heading", name="Xenosaga Enemy Database", exact=True)).to_be_visible()
+        expect(page.get_by_role("table")).to_have_count(3)
+        expect(page.locator("th[scope='row']")).to_have_count(325)
+        assert page.get_by_role("link", name="Markdown edition").get_attribute("href") == "/xenosaga.md"
+    finally:
+        context.close()

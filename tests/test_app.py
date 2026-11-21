@@ -185,3 +185,66 @@ def test_grid_tab_and_detail_callbacks(client, dash_app, grid_id, tabs_id, tab, 
     assert close.json["response"][f"{prefix}-modal"]["is_open"] is False
     inputs[0] = (grid_id, "cellClicked", {"rowId": "not-a-row"})
     assert post_callback(client, dash_app, f"{prefix}-modal", inputs, f"{grid_id}.cellClicked").status_code == 204
+
+
+def test_public_pages_advertise_reachable_markdown_companions(client):
+    for page in page_registry.values():
+        path = page["path"]
+        mirror = "/index.md" if path == "/" else f"{path}.md"
+        response = client.get(path)
+        assert '<main ' in response.text
+        structured_data = re.search(r'<script type="application/ld\+json">(.*?)</script>', response.text)
+        graph = json.loads(structured_data.group(1))["@graph"]
+        web_page = next(node for node in graph if node["@type"] == "WebPage")
+        assert web_page["url"] == f"https://ludex.games{path}"
+        assert '<link rel="alternate" href="https://ludex.games/llms.txt" type="text/plain">' in response.text
+        assert f'<link rel="alternate" href="https://ludex.games{mirror}" type="text/markdown">' in response.text
+        assert f'<https://ludex.games{mirror}>; rel="alternate"; type="text/markdown"' in response.headers.getlist("Link")
+        companion = client.get(mirror)
+        assert companion.status_code == 200
+        assert companion.mimetype == "text/markdown"
+        assert companion.headers["Link"] == f'<https://ludex.games{path}>; rel="canonical"'
+        assert page["description"] in companion.text
+
+
+def test_xenosaga_markdown_publishes_the_complete_dataset(client):
+    from games.xenosaga.seo import EPISODES
+
+    mirror = client.get("/xenosaga.md").text
+    full = client.get("/llms-full.txt")
+    assert full.mimetype == "text/plain"
+    assert mirror.split("---\n", 2)[2].strip() in full.text
+    assert sum(line.startswith("| ") for line in mirror.splitlines()) == 325 + 2 * len(EPISODES)
+    for episode in EPISODES:
+        assert episode["label"] in mirror
+        assert episode["source_url"] in mirror
+    html = client.get("/xenosaga").text
+    structured_data = re.search(r'<script type="application/ld\+json">(.*?)</script>', html)
+    dataset = next(node for node in json.loads(structured_data.group(1))["@graph"] if node["@type"] == "Dataset")
+    assert dataset["distribution"]["contentUrl"] == "https://ludex.games/xenosaga.md"
+    manifest = client.get("/llms.txt").text
+    assert "https://ludex.games/llms-full.txt" in manifest
+    assert "https://ludex.games/xenosaga.md" in manifest
+
+
+def test_unknown_pages_and_discovery_files_have_real_404s(client):
+    for path in ("/missing", "/missing/", "/missing.md", "/fake-sitemap.xml"):
+        response = client.get(path)
+        assert response.status_code == 404
+        assert "Link" not in response.headers
+
+    response = client.get("/exp33/calculator/?build=a%26b")
+    assert response.status_code == 308
+    assert response.location == "/exp33/calculator?build=a%26b"
+
+
+def test_crawler_preferences_and_source_dates(client, monkeypatch):
+    assert "Content-Signal: search=yes, ai-input=yes, ai-train=no" in client.get("/robots.txt").text
+    monkeypatch.setenv("SITE_PAGE_LASTMOD", '{"/xenosaga":"2026-11-20","/":"invalid"}')
+    document = ElementTree.fromstring(client.get("/sitemap.xml").data)
+    dates = {
+        entry.findtext("{*}loc"): entry.findtext("{*}lastmod")
+        for entry in document.findall("{*}url")
+    }
+    assert dates["https://ludex.games/xenosaga"] == "2026-11-20"
+    assert dates["https://ludex.games/"] is None

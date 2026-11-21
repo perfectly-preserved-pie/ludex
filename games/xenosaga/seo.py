@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import html
-import json
 import sqlite3
+from contextlib import closing
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from helpers.seo import SITE_ORIGIN, SOCIAL_IMAGE_URL, build_social_head_metadata
+from helpers.seo import (
+    SITE_ORIGIN,
+    SOCIAL_IMAGE_URL,
+    build_social_head_metadata,
+    serialize_json_ld,
+    website_entity,
+)
 
 XENOSAGA_PATH = "/xenosaga"
 XENOSAGA_URL = f"{SITE_ORIGIN}{XENOSAGA_PATH}"
@@ -62,25 +68,28 @@ def _escape(value: Any) -> str:
     return html.escape(str(value))
 
 
-def _render_episode_table(
-    connection: sqlite3.Connection,
-    *,
-    episode_id: str,
-    episode_label: str,
-    table_name: str,
-) -> tuple[str, int]:
+@lru_cache(maxsize=3)
+def _episode_data(table_name: str) -> tuple[list[str], list[tuple]]:
+    """Read the same ordered records for both the HTML and Markdown editions."""
+
+    with closing(sqlite3.connect(f"{DATABASE_PATH.as_uri()}?mode=ro", uri=True)) as connection:
+        columns = [
+            row[1]
+            for row in connection.execute(f'PRAGMA table_info("{table_name}")')
+            if row[1] != "uuid"
+        ]
+        quoted_columns = ", ".join(f'"{column}"' for column in columns)
+        rows = connection.execute(
+            f'SELECT {quoted_columns} FROM "{table_name}" ORDER BY "Name"'
+        ).fetchall()
+    return columns, rows
+
+
+def _render_episode_table(episode: dict[str, str]) -> tuple[str, int]:
     """Render one complete episode table as semantic, non-JavaScript HTML."""
 
-    columns = [
-        row[1]
-        for row in connection.execute(f'PRAGMA table_info("{table_name}")')
-        if row[1] != "uuid"
-    ]
-    quoted_columns = ", ".join(f'"{column}"' for column in columns)
-    rows = connection.execute(
-        f'SELECT {quoted_columns} FROM "{table_name}" ORDER BY "Name"'
-    ).fetchall()
-
+    episode_id, episode_label = episode["id"], episode["label"]
+    columns, rows = _episode_data(episode["table"])
     header_cells = "".join(
         f'<th scope="col">{html.escape(column)}</th>' for column in columns
     )
@@ -112,16 +121,10 @@ def build_xenosaga_static_html() -> str:
 
     episode_tables: list[str] = []
     episode_counts: list[tuple[str, str, int]] = []
-    with sqlite3.connect(DATABASE_PATH) as connection:
-        for episode in EPISODES:
-            table_html, count = _render_episode_table(
-                connection,
-                episode_id=episode["id"],
-                episode_label=episode["label"],
-                table_name=episode["table"],
-            )
-            episode_tables.append(table_html)
-            episode_counts.append((episode["id"], episode["label"], count))
+    for episode in EPISODES:
+        table_html, count = _render_episode_table(episode)
+        episode_tables.append(table_html)
+        episode_counts.append((episode["id"], episode["label"], count))
 
     total_enemies = sum(count for _, _, count in episode_counts)
     episode_links = "".join(
@@ -150,6 +153,7 @@ def build_xenosaga_static_html() -> str:
         "column filters when JavaScript is available.</p>"
         "<nav aria-label=\"Xenosaga episode index\"><h2>Choose an episode</h2>"
         f"<ul>{episode_links}</ul></nav>"
+        '<p><a href="/">Ludex home</a> · <a href="/xenosaga.md">Markdown edition</a></p>'
         "</header>"
         f"{''.join(episode_tables)}"
         '<section id="sources" class="card card-body">'
@@ -168,19 +172,50 @@ def build_xenosaga_static_html() -> str:
     )
 
 
+def _markdown_cell(value: Any) -> str:
+    if value is None or value == "":
+        return "—"
+    text = html.escape(" ".join(str(value).splitlines()), quote=False)
+    return text.replace("\\", "\\\\").replace("|", r"\|")
+
+
+@lru_cache(maxsize=1)
+def build_xenosaga_markdown_details() -> str:
+    """Render every enemy record with episode-specific columns and source links."""
+
+    lines = []
+    for episode in EPISODES:
+        columns, rows = _episode_data(episode["table"])
+        lines.extend([
+            f'## {episode["label"]}',
+            "",
+            f'{len(rows)} enemy records. [{episode["source_label"]}]({episode["source_url"]})',
+            "",
+            "| " + " | ".join(map(_markdown_cell, columns)) + " |",
+            "| " + " | ".join("---" for _ in columns) + " |",
+        ])
+        lines.extend("| " + " | ".join(map(_markdown_cell, row)) + " |" for row in rows)
+        lines.append("")
+    lines.extend([
+        "## Sources and methodology",
+        "",
+        "Episode I and III data were extracted and checked programmatically. Episode II "
+        "data was transcribed manually. Xenoseries Wiki item lists supplement item effect descriptions.",
+        "",
+        "[Source code and documentation](https://github.com/perfectly-preserved-pie/ludex/tree/main/games/xenosaga) · "
+        "[Report a correction](mailto:hey@ludex.games)",
+        "",
+    ])
+    return "\n".join(lines)
+
+
 def build_xenosaga_json_ld() -> str:
     """Return JSON-LD describing the visible Xenosaga database content."""
 
     data = {
         "@context": "https://schema.org",
         "@graph": [
-            {
-                "@type": "WebSite",
-                "@id": f"{SITE_ORIGIN}/#website",
-                "url": f"{SITE_ORIGIN}/",
-                "name": "Ludex",
-                "description": "Game tools, databases, and reference pages.",
-            },
+            website_entity(),
             {
                 "@type": "Dataset",
                 "@id": f"{XENOSAGA_URL}#dataset",
@@ -193,6 +228,11 @@ def build_xenosaga_json_ld() -> str:
                     "url": f"{SITE_ORIGIN}/",
                 },
                 "isBasedOn": [episode["source_url"] for episode in EPISODES],
+                "distribution": {
+                    "@type": "DataDownload",
+                    "encodingFormat": "text/markdown",
+                    "contentUrl": f"{XENOSAGA_URL}.md",
+                },
                 "keywords": [
                     "Xenosaga enemies",
                     "Xenosaga enemy database",
@@ -231,9 +271,7 @@ def build_xenosaga_json_ld() -> str:
             },
         ],
     }
-    return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace(
-        "</", "<\\/"
-    )
+    return serialize_json_ld(data)
 
 
 def build_xenosaga_head_metadata(existing_metas: str) -> str:

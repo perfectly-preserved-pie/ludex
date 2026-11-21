@@ -13,6 +13,8 @@ WORKDIR /app
 # Copy the whole prepared app tree including its permsissions from the builder stage
 COPY --from=builder /app /app
 
+ARG SITE_PAGE_LASTMOD="{}"
+ENV SITE_PAGE_LASTMOD=${SITE_PAGE_LASTMOD}
 ENV PATH="/app/.venv/bin:$PATH"
 ENTRYPOINT ["gunicorn"]
 CMD ["--chdir", "/app", "-b", "0.0.0.0:8080", "--workers=10", "--preload", "app:server"]

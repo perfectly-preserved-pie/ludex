@@ -3,15 +3,22 @@ from __future__ import annotations
 import re
 from html import escape as html_escape
 from typing import Any
-from xml.sax.saxutils import escape as xml_escape
 
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash import Input, Output, callback, dcc, html, page_registry, register_page
 from dash_iconify import DashIconify
-from flask import Response, has_request_context, redirect, request
-from helpers.seo import SITE_DESCRIPTION, build_social_head_metadata
+from flask import Response, abort, has_request_context, redirect, request
+from helpers.seo import (
+    SITE_DESCRIPTION,
+    alternate_links,
+    build_initial_page,
+    build_markdown,
+    build_page_structured_data,
+    build_sitemap_urls,
+    build_social_head_metadata,
+)
 from helpers.analytics import ANALYTICS_STORES, register_analytics
 from games.xenosaga.seo import (
     SITE_ORIGIN,
@@ -20,6 +27,7 @@ from games.xenosaga.seo import (
     XENOSAGA_TITLE,
     build_xenosaga_head_metadata,
     build_xenosaga_static_html,
+    build_xenosaga_markdown_details,
 )
 
 
@@ -51,6 +59,11 @@ class LudexDash(dash.Dash):
                     description=page.get("description") or SITE_DESCRIPTION,
                     path=page["path"],
                 )
+                kwargs["metas"] += build_page_structured_data(page)
+                kwargs["app_entry"] = (
+                    '<div id="react-entry-point">'
+                    f'{build_initial_page(page, public_pages())}</div>'
+                )
 
         if has_request_context() and request.path == XENOSAGA_PATH:
             kwargs["title"] = html_escape(XENOSAGA_TITLE)
@@ -63,6 +76,12 @@ class LudexDash(dash.Dash):
                 "</div>"
                 f"{build_xenosaga_static_html()}"
                 "</div>"
+            )
+
+        if has_request_context() and request.path in public_pages():
+            kwargs["metas"] += "".join(
+                f'<link rel="alternate" href="{url}" type="{media_type}">'
+                for url, media_type in alternate_links(request.path)
             )
 
         return super().interpolate_index(**kwargs)
@@ -161,25 +180,38 @@ def robots_txt() -> Response:
     """Advertise open crawling and the canonical sitemap location."""
 
     return crawler_response(
-        "User-agent: *\nAllow: /\n\nSitemap: https://ludex.games/sitemap.xml\n",
+        "User-agent: *\nAllow: /\n"
+        "Content-Signal: search=yes, ai-input=yes, ai-train=no\n\n"
+        f"Sitemap: {SITE_ORIGIN}/sitemap.xml\n",
         "text/plain",
     )
+
+
+def public_pages() -> dict[str, dict[str, Any]]:
+    """Map canonical paths to the registered public pages."""
+
+    return {
+        page["path"]: page
+        for page in page_registry.values()
+        if page.get("path") and not page.get("path_template")
+    }
+
+
+@app.server.after_request
+def advertise_page_alternates(response: Response) -> Response:
+    """Expose discovery links to clients that only inspect response headers."""
+
+    if response.status_code == 200 and request.path in public_pages():
+        for url, media_type in alternate_links(request.path):
+            response.headers.add("Link", f'<{url}>; rel="alternate"; type="{media_type}"')
+    return response
 
 
 @app.server.get("/sitemap.xml")
 def sitemap_xml() -> Response:
     """List canonical public Dash pages for search-engine discovery."""
 
-    paths = {
-        page["path"]
-        for page in page_registry.values()
-        if page.get("path") and not page.get("path_template")
-    }
-    ordered_paths = sorted(paths, key=lambda path: (path != "/", path))
-    urls = "".join(
-        f"<url><loc>{xml_escape(f'{SITE_ORIGIN}{path}')}</loc></url>"
-        for path in ordered_paths
-    )
+    urls = build_sitemap_urls(sorted(public_pages()))
     document = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
@@ -187,6 +219,37 @@ def sitemap_xml() -> Response:
         "</urlset>"
     )
     return crawler_response(document, "application/xml")
+
+
+def page_guide(path: str, page: dict[str, Any], *, frontmatter: bool = True) -> str:
+    """Render a page guide and attach the complete dataset for Xenosaga."""
+
+    details = build_xenosaga_markdown_details() if path == XENOSAGA_PATH else ""
+    return build_markdown(page, details, frontmatter=frontmatter)
+
+
+@app.server.get("/index.md", defaults={"page_path": "index"})
+@app.server.get("/<path:page_path>.md")
+def page_markdown(page_path: str) -> Response:
+    """Serve the public Markdown companion for a registered page."""
+
+    path = "/" if page_path == "index" else f"/{page_path}"
+    page = public_pages().get(path)
+    if page is None:
+        abort(404)
+    response = crawler_response(page_guide(path, page), "text/markdown")
+    response.headers["Link"] = f'<{SITE_ORIGIN}{path}>; rel="canonical"'
+    return response
+
+
+@app.server.get("/llms-full.txt")
+def llms_full_txt() -> Response:
+    """Serve the page guides together with the full Xenosaga dataset."""
+
+    pages = public_pages()
+    ordered_paths = ["/", XENOSAGA_PATH, *(path for path in sorted(pages) if path not in {"/", XENOSAGA_PATH})]
+    guides = (page_guide(path, pages[path], frontmatter=False) for path in ordered_paths)
+    return crawler_response("\n---\n\n".join(guides), "text/plain")
 
 
 @app.server.get("/llms.txt")
@@ -198,6 +261,9 @@ def llms_txt() -> Response:
 > Ludex is a collection of searchable game databases, calculators, and reference pages.
 
 Canonical site: https://ludex.games/
+
+- [Expanded text guide](https://ludex.games/llms-full.txt): All page guides and Xenosaga enemy tables in one document.
+- [Xenosaga Markdown edition](https://ludex.games/xenosaga.md): All enemy records with episode-specific statistics and source links.
 
 ## Xenosaga Enemy Database
 
@@ -249,17 +315,19 @@ def redirect_legacy_dash_chunk() -> Response | None:
 
 
 @app.server.before_request
-def redirect_noncanonical_xenosaga_path() -> Response | None:
-    """Consolidate the trailing-slash Xenosaga URL into its canonical URL."""
+def enforce_public_page_routes() -> Response | None:
+    """Redirect slash variants and return a genuine 404 for unknown Dash pages."""
 
-    if request.path != f"{XENOSAGA_PATH}/":
+    if request.endpoint != "/<path:path>":
         return None
-
-    query_string = request.query_string.decode("utf-8")
-    target = XENOSAGA_PATH
-    if query_string:
-        target = f"{target}?{query_string}"
-    return redirect(target, code=308)
+    pages = public_pages()
+    if request.path in pages:
+        return None
+    target = request.path.rstrip("/")
+    if target in pages:
+        query = request.query_string.decode("latin-1")
+        return redirect(f"{target}?{query}" if query else target, code=308)
+    abort(404)
 
 
 dmc.pre_render_color_scheme()
@@ -330,7 +398,6 @@ def home_layout() -> dbc.Container:
     """
     return dbc.Container(
         [
-            dcc.Location(id="url"),
             dbc.Row(
                 dbc.Col(
                     dbc.Card(
@@ -421,6 +488,7 @@ app.layout = dmc.MantineProvider(
     dbc.Container(
         [
             *ANALYTICS_STORES,
+            dcc.Location(id="url", refresh="callback-nav"),
             dbc.Row(
                 dbc.Col(
                     html.Div(
