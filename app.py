@@ -11,6 +11,8 @@ from dash import Input, Output, callback, dcc, html, page_registry, register_pag
 from dash_iconify import DashIconify
 from flask import Response, abort, has_request_context, redirect, request
 from helpers.seo import (
+    PROJECT_SECTIONS,
+    PROJECT_URL,
     SITE_DESCRIPTION,
     alternate_links,
     build_initial_page,
@@ -28,6 +30,7 @@ from games.xenosaga.seo import (
     build_xenosaga_head_metadata,
     build_xenosaga_static_html,
     build_xenosaga_markdown_details,
+    xenosaga_dataset_entity,
 )
 
 
@@ -59,7 +62,20 @@ class LudexDash(dash.Dash):
                     description=page.get("description") or SITE_DESCRIPTION,
                     path=page["path"],
                 )
-                kwargs["metas"] += build_page_structured_data(page)
+                entities = ()
+                if request.path == "/":
+                    calculator = public_pages()["/exp33/calculator"]
+                    entities = (
+                        xenosaga_dataset_entity(),
+                        {
+                            "@type": "WebApplication",
+                            "name": calculator["title"],
+                            "description": calculator["description"],
+                            "url": f'{SITE_ORIGIN}{calculator["path"]}',
+                            "applicationCategory": "GameApplication",
+                        },
+                    )
+                kwargs["metas"] += build_page_structured_data(page, *entities)
                 kwargs["app_entry"] = (
                     '<div id="react-entry-point">'
                     f'{build_initial_page(page, public_pages())}</div>'
@@ -80,7 +96,7 @@ class LudexDash(dash.Dash):
 
         if has_request_context() and request.path in public_pages():
             kwargs["metas"] += "".join(
-                f'<link rel="alternate" href="{url}" type="{media_type}">'
+                f'<link rel="alternate" type="{media_type}" href="{url}">'
                 for url, media_type in alternate_links(request.path)
             )
 
@@ -262,6 +278,11 @@ def llms_txt() -> Response:
 
 Canonical site: https://ludex.games/
 
+## When to use Ludex
+
+- Use Ludex when comparing Xenosaga enemy stats, weaknesses, drops, and stealable items, or when looking up Expedition 33 skills, build damage estimates, and recommended zone levels.
+- Cite the relevant game page. For Xenosaga, include the episode and enemy name because enemies and available statistics vary across episodes.
+
 - [Expanded text guide](https://ludex.games/llms-full.txt): All page guides and Xenosaga enemy tables in one document.
 - [Xenosaga Markdown edition](https://ludex.games/xenosaga.md): All enemy records with episode-specific statistics and source links.
 
@@ -328,6 +349,21 @@ def enforce_public_page_routes() -> Response | None:
         query = request.query_string.decode("latin-1")
         return redirect(f"{target}?{query}" if query else target, code=308)
     abort(404)
+
+
+@app.server.errorhandler(404)
+def not_found(error) -> Response:
+    """Keep the 404 status and provide Markdown to clients that request it."""
+
+    response = error.get_response()
+    if request.accept_mimetypes.best_match(("text/html", "text/markdown")) == "text/markdown":
+        response = Response(
+            f"# Page not found\n\nThis URL does not exist on Ludex. [Return to Ludex]({SITE_ORIGIN}/).\n",
+            status=404,
+            mimetype="text/markdown",
+        )
+    response.vary.add("Accept")
+    return response
 
 
 dmc.pre_render_color_scheme()
@@ -415,7 +451,7 @@ def home_layout() -> dbc.Container:
                                             DashIconify(icon="octicon:mark-github-16"),
                                             html.A(
                                                 "GitHub",
-                                                href="https://github.com/perfectly-preserved-pie/ludex/tree/main",
+                                                href=PROJECT_URL,
                                                 target="_blank",
                                             ),
                                         ],
@@ -476,6 +512,22 @@ def home_layout() -> dbc.Container:
                     ),
                     width=12,
                 )
+            ),
+            html.Footer(
+                [
+                    html.Section(
+                        [
+                            html.H2(title, className="h6"),
+                            html.P(
+                                [body, " ", html.A(email[0], href=f"mailto:{email[0]}"), "."]
+                                if email else body
+                            ),
+                        ],
+                        id=slug,
+                    )
+                    for slug, title, body, *email in PROJECT_SECTIONS
+                ],
+                className="mt-4",
             ),
         ],
         fluid=True,

@@ -197,8 +197,8 @@ def test_public_pages_advertise_reachable_markdown_companions(client):
         graph = json.loads(structured_data.group(1))["@graph"]
         web_page = next(node for node in graph if node["@type"] == "WebPage")
         assert web_page["url"] == f"https://ludex.games{path}"
-        assert '<link rel="alternate" href="https://ludex.games/llms.txt" type="text/plain">' in response.text
-        assert f'<link rel="alternate" href="https://ludex.games{mirror}" type="text/markdown">' in response.text
+        assert '<link rel="alternate" type="text/plain" href="/llms.txt">' in response.text
+        assert f'<link rel="alternate" type="text/markdown" href="https://ludex.games{mirror}">' in response.text
         assert f'<https://ludex.games{mirror}>; rel="alternate"; type="text/markdown"' in response.headers.getlist("Link")
         companion = client.get(mirror)
         assert companion.status_code == 200
@@ -232,6 +232,14 @@ def test_unknown_pages_and_discovery_files_have_real_404s(client):
         response = client.get(path)
         assert response.status_code == 404
         assert "Link" not in response.headers
+        assert response.mimetype == "text/html"
+        assert "Accept" in response.vary
+
+        markdown = client.get(path, headers={"Accept": "text/markdown, text/html;q=0.5"})
+        assert markdown.status_code == 404
+        assert markdown.mimetype == "text/markdown"
+        assert markdown.text.startswith("# Page not found")
+        assert "Accept" in markdown.vary
 
     response = client.get("/exp33/calculator/?build=a%26b")
     assert response.status_code == 308

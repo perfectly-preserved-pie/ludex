@@ -11,6 +11,7 @@ from helpers.seo import (
     SITE_ORIGIN,
     SOCIAL_IMAGE_URL,
     build_social_head_metadata,
+    publisher_entity,
     serialize_json_ld,
     website_entity,
 )
@@ -209,6 +210,32 @@ def build_xenosaga_markdown_details() -> str:
     return "\n".join(lines)
 
 
+def xenosaga_dataset_entity() -> dict:
+    """Describe the same dataset from the home and Xenosaga pages."""
+
+    return {
+        "@type": "Dataset",
+        "@id": f"{XENOSAGA_URL}#dataset",
+        "name": "Xenosaga Enemy Database",
+        "description": XENOSAGA_DESCRIPTION,
+        "url": XENOSAGA_URL,
+        "creator": {"@id": f"{SITE_ORIGIN}/#publisher"},
+        "isBasedOn": [episode["source_url"] for episode in EPISODES],
+        "distribution": {
+            "@type": "DataDownload",
+            "encodingFormat": "text/markdown",
+            "contentUrl": f"{XENOSAGA_URL}.md",
+        },
+        "keywords": [
+            "Xenosaga enemies",
+            "Xenosaga enemy database",
+            "Xenosaga enemy stats",
+            "Xenosaga weaknesses",
+            "Xenosaga item drops",
+        ],
+    }
+
+
 def build_xenosaga_json_ld() -> str:
     """Return JSON-LD describing the visible Xenosaga database content."""
 
@@ -216,31 +243,8 @@ def build_xenosaga_json_ld() -> str:
         "@context": "https://schema.org",
         "@graph": [
             website_entity(),
-            {
-                "@type": "Dataset",
-                "@id": f"{XENOSAGA_URL}#dataset",
-                "name": "Xenosaga Enemy Database",
-                "description": XENOSAGA_DESCRIPTION,
-                "url": XENOSAGA_URL,
-                "creator": {
-                    "@type": "Organization",
-                    "name": "Ludex",
-                    "url": f"{SITE_ORIGIN}/",
-                },
-                "isBasedOn": [episode["source_url"] for episode in EPISODES],
-                "distribution": {
-                    "@type": "DataDownload",
-                    "encodingFormat": "text/markdown",
-                    "contentUrl": f"{XENOSAGA_URL}.md",
-                },
-                "keywords": [
-                    "Xenosaga enemies",
-                    "Xenosaga enemy database",
-                    "Xenosaga enemy stats",
-                    "Xenosaga weaknesses",
-                    "Xenosaga item drops",
-                ],
-            },
+            publisher_entity(),
+            xenosaga_dataset_entity(),
             {
                 "@type": "WebPage",
                 "@id": f"{XENOSAGA_URL}#webpage",

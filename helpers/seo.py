@@ -9,8 +9,55 @@ from html import escape
 
 SITE_ORIGIN = "https://ludex.games"
 SITE_DESCRIPTION = "Game databases, calculators and reference pages for Xenosaga and Clair Obscur: Expedition 33."
+PROJECT_URL = "https://github.com/perfectly-preserved-pie/ludex"
+CONTACT_EMAIL = "hey@ludex.games"
 SOCIAL_IMAGE_URL = f"{SITE_ORIGIN}/assets/social-preview.png"
 SOCIAL_IMAGE_ALT = "Ludex — Game databases, calculators and reference pages. Xenosaga and Clair Obscur: Expedition 33."
+
+PAGE_GUIDANCE = {
+    "/": (
+        "Use the Xenosaga Enemy Database to compare enemies across Episodes I, II and III. "
+        "Each episode has its own table and fields. The HTML tables and Markdown edition include "
+        "the complete dataset and link back to the original enemy guides.",
+        "For Clair Obscur: Expedition 33, use the skill reference to look up damage multipliers "
+        "and hit counts, the calculator to compare builds, or the zone reference to plan where "
+        "to explore next.",
+    ),
+    "/exp33/calculator": (
+        "Choose a character, skill, and weapon, then enter build stats and relevant bonuses. "
+        "The calculator estimates damage for the selected setup and can compare two builds. "
+        "Change one setting at a time to see how it affects the estimate.",
+        "A supported Expedition 33 save file can fill in build details. You can also enter a build "
+        "manually. Use the skill damage reference to check hit counts and multipliers, and enable "
+        "JavaScript to run a calculation or import a save.",
+    ),
+    "/exp33/skilldamage": (
+        "Pick a character to browse their skills. Compare damage multipliers and hit counts, "
+        "or open a skill's detail view to inspect its per-hit information.",
+        "Use the damage calculator when you want a build-specific estimate that accounts for "
+        "weapons, character stats and bonuses. Use this reference to check the underlying "
+        "skill data before changing a build.",
+    ),
+    "/exp33/zonelevels": (
+        "Use the zone level reference to compare recommended levels when deciding where to explore. "
+        "Filter the interactive table by level to find areas around your party's current level.",
+        "The levels are community guidance, and encounters can vary with equipment and builds. "
+        "Consult the skill damage reference or calculator if you want to compare combat setups "
+        "before attempting a tougher area.",
+    ),
+}
+
+PROJECT_SECTIONS = (
+    ("about", "About", "Ludex is an independent, open-source project for game reference data and build tools."),
+    ("contact", "Contact", "Send corrections or questions to", CONTACT_EMAIL),
+    (
+        "privacy",
+        "Privacy",
+        "Ludex uses Plausible and Rybbit for site analytics. If you choose to import a calculator "
+        "save, the file is sent to the server to extract build details. The calculator's analytics "
+        "event records whether the import succeeded or failed.",
+    ),
+)
 
 
 def build_social_head_metadata(
@@ -55,12 +102,26 @@ def alternate_links(path: str) -> tuple[tuple[str, str], ...]:
 
     markdown_path = "/index.md" if path == "/" else f"{path}.md"
     return (
-        (f"{SITE_ORIGIN}/llms.txt", "text/plain"),
+        ("/llms.txt", "text/plain"),
         (f"{SITE_ORIGIN}{markdown_path}", "text/markdown"),
     )
 
 
-def website_entity() -> dict[str, str]:
+def publisher_entity() -> dict:
+    """Identify the project and its public support contact."""
+
+    return {
+        "@type": "Organization",
+        "@id": f"{SITE_ORIGIN}/#publisher",
+        "name": "Ludex",
+        "url": f"{SITE_ORIGIN}/",
+        "description": SITE_DESCRIPTION,
+        "sameAs": PROJECT_URL,
+        "contactPoint": {"@type": "ContactPoint", "email": CONTACT_EMAIL, "contactType": "support"},
+    }
+
+
+def website_entity() -> dict:
     """Identify the same Ludex site in every page's structured data."""
 
     return {
@@ -70,10 +131,11 @@ def website_entity() -> dict[str, str]:
         "name": "Ludex",
         "description": SITE_DESCRIPTION,
         "inLanguage": "en",
+        "publisher": {"@id": f"{SITE_ORIGIN}/#publisher"},
     }
 
 
-def build_page_structured_data(page: dict) -> str:
+def build_page_structured_data(page: dict, *entities: dict) -> str:
     """Describe a public page and its relationship to Ludex."""
 
     site = website_entity()
@@ -82,6 +144,7 @@ def build_page_structured_data(page: dict) -> str:
         "@context": "https://schema.org",
         "@graph": [
             site,
+            publisher_entity(),
             {
                 "@type": "WebPage",
                 "@id": f"{url}#webpage",
@@ -90,6 +153,7 @@ def build_page_structured_data(page: dict) -> str:
                 "description": page["description"],
                 "isPartOf": {"@id": site["@id"]},
             },
+            *entities,
         ],
     }
     return f'<script type="application/ld+json">{serialize_json_ld(graph)}</script>'
@@ -109,12 +173,24 @@ def build_initial_page(page: dict, pages: dict) -> str:
         for path, item in sorted(pages.items())
         if path != page["path"]
     )
+    guidance = "".join(f"<p>{escape(paragraph)}</p>" for paragraph in PAGE_GUIDANCE.get(page["path"], ()))
+    project = ""
+    if page["path"] == "/":
+        project_links = " · ".join(f'<a href="#{slug}">{title}</a>' for slug, title, *_ in PROJECT_SECTIONS)
+        sections = [
+            f'<section id="{slug}"><h2>{title}</h2><p>{escape(body)}'
+            + (f' <a href="mailto:{email[0]}">{email[0]}</a>.' if email else "")
+            + "</p></section>"
+            for slug, title, body, *email in PROJECT_SECTIONS
+        ]
+        project = f'<nav aria-label="Project information">{project_links}</nav>' + "".join(sections)
     return (
         '<main class="container py-4">'
         f'<h1>{escape(page["title"].removesuffix(" | Ludex"))}</h1>'
-        f'<p>{escape(page["description"])}</p>'
+        f'<p>{escape(page["description"])}</p>{guidance}'
         '<noscript><p>Enable JavaScript to use the interactive tools.</p></noscript>'
         f'<nav aria-label="Ludex pages"><ul>{links}</ul></nav>'
+        f'{project}'
         '</main>'
     )
 
@@ -124,10 +200,11 @@ def build_markdown(page: dict, details: str, *, frontmatter: bool) -> str:
 
     title = page["title"].removesuffix(" | Ludex")
     canonical = f'{SITE_ORIGIN}{page["path"]}'
+    guidance = "".join(f"{paragraph}\n\n" for paragraph in PAGE_GUIDANCE.get(page["path"], ()))
     metadata = f"---\ntitle: {json.dumps(title, ensure_ascii=False)}\ncanonical: {canonical}\n---\n\n" if frontmatter else ""
     return (
         f'{metadata}# {title}\n\n{page["description"]}\n\n'
-        f'[Open the interactive page]({canonical})\n\n{details}'
+        f'[Open the interactive page]({canonical})\n\n{guidance}{details}'
     )
 
 
