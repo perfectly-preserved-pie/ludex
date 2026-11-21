@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from html import escape as html_escape
 from typing import Any
+from urllib.parse import quote_from_bytes
 
 import dash
 import dash_bootstrap_components as dbc
@@ -325,14 +326,10 @@ def redirect_legacy_dash_chunk() -> Response | None:
         return None
 
     filename = match.group(1)
-    registered_path = f"dcc/{filename}"
-    if registered_path not in app.registered_paths.get("dash", set()):
-        return None
-
-    return redirect(
-        f"/_dash-component-suites/dash/{registered_path}",
-        code=307,
-    )
+    for registered_path in app.registered_paths.get("dash", ()):
+        if registered_path == f"dcc/{filename}":
+            return redirect(f"/_dash-component-suites/dash/{registered_path}", code=307)
+    return None
 
 
 @app.server.before_request
@@ -344,10 +341,13 @@ def enforce_public_page_routes() -> Response | None:
     pages = public_pages()
     if request.path in pages:
         return None
-    target = request.path.rstrip("/")
-    if target in pages:
-        query = request.query_string.decode("latin-1")
-        return redirect(f"{target}?{query}" if query else target, code=308)
+    page = pages.get(request.path.rstrip("/"))
+    if page is not None:
+        target = page["path"]
+        # Keep the original parameter order and percent escapes. The registered
+        # path fixes the destination, and quoting keeps query bytes in the query.
+        query = quote_from_bytes(request.query_string, safe="!$&'()*+,/:;=?@%")
+        return redirect(target + "?" + query if query else target, code=308)
     abort(404)
 
 

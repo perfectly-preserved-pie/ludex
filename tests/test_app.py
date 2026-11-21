@@ -87,7 +87,11 @@ def test_crawler_resources(client, path, content_type):
     response = client.get(path)
     assert response.status_code == 200
     assert response.mimetype == content_type
-    assert "https://ludex.games/" in response.text
+    expected_line = {
+        "/robots.txt": "Sitemap: https://ludex.games/sitemap.xml",
+        "/llms.txt": "Canonical site: https://ludex.games/",
+    }[path]
+    assert expected_line in response.text.splitlines()
 
 
 @pytest.mark.parametrize("path", ["/xenosaga", "/_dash-layout", "/_dash-dependencies"])
@@ -241,9 +245,9 @@ def test_unknown_pages_and_discovery_files_have_real_404s(client):
         assert markdown.text.startswith("# Page not found")
         assert "Accept" in markdown.vary
 
-    response = client.get("/exp33/calculator/?build=a%26b")
+    response = client.get("/exp33/calculator/?build=a%26b&mode&build=second")
     assert response.status_code == 308
-    assert response.location == "/exp33/calculator?build=a%26b"
+    assert response.location == "/exp33/calculator?build=a%26b&mode&build=second"
 
 
 def test_crawler_preferences_and_source_dates(client, monkeypatch):
