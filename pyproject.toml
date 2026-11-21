@@ -12,8 +12,8 @@ dependencies = [
     "dash-bootstrap-components==2.0.4",
     "dash-iconify==0.1.2",
     "dash-mantine-components==3.0.0",
-    "dash[compress]==4.5.0",
-    "gunicorn==26.2.0",
+    "dash[compress]==4.5.1",
+    "gunicorn==27.0.1",
     "pandas==3.1.1",
     "loguru==0.8.0",
     "orjson==3.13.0",
@@ -22,7 +22,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pip-audit==2.10.1",
-    "playwright==1.65.1",
+    "playwright==1.65.2",
     "pytest==9.2.0",
 ]
 
