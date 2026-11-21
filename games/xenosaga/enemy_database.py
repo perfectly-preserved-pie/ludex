@@ -150,6 +150,8 @@ modal = dbc.Modal(
         ),
     ],
     id="xenosaga-modal",
+    class_name="xenosaga-enemy-dialog",
+    backdrop_class_name="xenosaga-enemy-backdrop",
     is_open=False,
     scrollable=True,
 )

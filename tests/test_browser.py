@@ -191,3 +191,33 @@ def test_xenosaga_is_readable_without_javascript(browser, live_url):
         assert page.get_by_role("link", name="Markdown edition").get_attribute("href") == "/xenosaga.md"
     finally:
         context.close()
+
+
+@pytest.mark.parametrize("reduced_motion", ["no-preference", "reduce"])
+def test_navigation_and_enemy_dialog_respect_motion_preference(page, live_url, reduced_motion):
+    page.emulate_media(reduced_motion=reduced_motion)
+    page.add_init_script("""
+        const startTransition = document.startViewTransition.bind(document);
+        window.completedPageTransitions = 0;
+        document.startViewTransition = update => {
+            const transition = startTransition(update);
+            transition.ready.then(() => window.completedPageTransitions++, () => {});
+            return transition;
+        };
+    """)
+    page.goto(live_url)
+    page.get_by_text("Enemy Database", exact=True).click()
+    expect(page).to_have_url(f"{live_url}/xenosaga")
+    cell = page.locator("#xenosaga-grid .ag-cell[col-id='Name']").first
+    expect(cell).to_be_visible()
+    if reduced_motion == "no-preference":
+        page.wait_for_function("window.completedPageTransitions === 1")
+    else:
+        assert page.evaluate("window.completedPageTransitions") == 0
+
+    cell.click()
+    dialog = page.locator(".xenosaga-enemy-dialog .modal-dialog")
+    expect(dialog).to_be_visible()
+    expect(dialog).to_have_css(
+        "transition-duration", "0s" if reduced_motion == "reduce" else "0.16s"
+    )

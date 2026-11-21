@@ -214,3 +214,38 @@ html[data-mantine-color-scheme="dark"] .dmc {
         grid-template-columns: 1fr;
     }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+    html.ludex-page-transition {
+        view-transition-name: none;
+    }
+
+    .ludex-page-transition #_pages_content {
+        view-transition-name: ludex-page-content;
+    }
+
+    ::view-transition-group(ludex-page-content) {
+        animation-duration: 140ms;
+    }
+
+    .xenosaga-enemy-dialog.modal.fade .modal-dialog {
+        transform: scale(0.96);
+        transition: transform 160ms ease-out;
+    }
+
+    .xenosaga-enemy-dialog.modal.show .modal-dialog {
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .xenosaga-enemy-dialog.modal.fade,
+    .xenosaga-enemy-dialog.modal.fade .modal-dialog,
+    .xenosaga-enemy-backdrop.fade {
+        transition: none;
+    }
+
+    .xenosaga-enemy-dialog.modal.fade .modal-dialog {
+        transform: none;
+    }
+}
