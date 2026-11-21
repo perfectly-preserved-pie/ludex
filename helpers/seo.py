@@ -11,6 +11,7 @@ SITE_ORIGIN = "https://ludex.games"
 SITE_DESCRIPTION = "Game databases, calculators and reference pages for Xenosaga and Clair Obscur: Expedition 33."
 PROJECT_URL = "https://github.com/perfectly-preserved-pie/ludex"
 CONTACT_EMAIL = "hey@ludex.games"
+PROJECT_INFO_PATH = "/about"
 SOCIAL_IMAGE_URL = f"{SITE_ORIGIN}/assets/social-preview.png"
 SOCIAL_IMAGE_ALT = "Ludex — Game databases, calculators and reference pages. Xenosaga and Clair Obscur: Expedition 33."
 
@@ -174,23 +175,29 @@ def build_initial_page(page: dict, pages: dict) -> str:
         if path != page["path"]
     )
     guidance = "".join(f"<p>{escape(paragraph)}</p>" for paragraph in PAGE_GUIDANCE.get(page["path"], ()))
+    noscript = (
+        '<noscript><p>Enable JavaScript to use the interactive tools.</p></noscript>'
+        if page["path"] != PROJECT_INFO_PATH else ""
+    )
     project = ""
     if page["path"] == "/":
-        project_links = " · ".join(f'<a href="#{slug}">{title}</a>' for slug, title, *_ in PROJECT_SECTIONS)
-        sections = [
+        project_links = " · ".join(
+            f'<a href="{PROJECT_INFO_PATH}#{slug}">{title}</a>' for slug, title, *_ in PROJECT_SECTIONS
+        )
+        project = f'<nav aria-label="Project information">{project_links}</nav>'
+    elif page["path"] == PROJECT_INFO_PATH:
+        project = "".join(
             f'<section id="{slug}"><h2>{title}</h2><p>{escape(body)}'
             + (f' <a href="mailto:{email[0]}">{email[0]}</a>.' if email else "")
             + "</p></section>"
             for slug, title, body, *email in PROJECT_SECTIONS
-        ]
-        project = f'<nav aria-label="Project information">{project_links}</nav>' + "".join(sections)
+        )
     return (
         '<main class="container py-4">'
         f'<h1>{escape(page["title"].removesuffix(" | Ludex"))}</h1>'
-        f'<p>{escape(page["description"])}</p>{guidance}'
-        '<noscript><p>Enable JavaScript to use the interactive tools.</p></noscript>'
-        f'<nav aria-label="Ludex pages"><ul>{links}</ul></nav>'
+        f'<p>{escape(page["description"])}</p>{guidance}{noscript}'
         f'{project}'
+        f'<nav aria-label="Ludex pages"><ul>{links}</ul></nav>'
         '</main>'
     )
 
@@ -201,6 +208,13 @@ def build_markdown(page: dict, details: str, *, frontmatter: bool) -> str:
     title = page["title"].removesuffix(" | Ludex")
     canonical = f'{SITE_ORIGIN}{page["path"]}'
     guidance = "".join(f"{paragraph}\n\n" for paragraph in PAGE_GUIDANCE.get(page["path"], ()))
+    if page["path"] == PROJECT_INFO_PATH:
+        guidance = "".join(
+            f"## {heading}\n\n{body}"
+            + (f" [{email[0]}](mailto:{email[0]})." if email else "")
+            + "\n\n"
+            for _, heading, body, *email in PROJECT_SECTIONS
+        )
     metadata = f"---\ntitle: {json.dumps(title, ensure_ascii=False)}\ncanonical: {canonical}\n---\n\n" if frontmatter else ""
     return (
         f'{metadata}# {title}\n\n{page["description"]}\n\n'

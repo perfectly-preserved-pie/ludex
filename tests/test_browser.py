@@ -221,3 +221,13 @@ def test_navigation_and_enemy_dialog_respect_motion_preference(page, live_url, r
     expect(dialog).to_have_css(
         "transition-duration", "0s" if reduced_motion == "reduce" else "0.16s"
     )
+
+
+def test_home_footer_links_to_project_information(page, live_url):
+    page.goto(live_url)
+    footer = page.locator("footer")
+    expect(footer.get_by_role("heading")).to_have_count(0)
+    expect(footer.get_by_role("link")).to_have_count(3)
+    footer.get_by_role("link", name="Privacy").click()
+    expect(page).to_have_url(f"{live_url}/about#privacy")
+    expect(page.locator("#privacy").get_by_role("heading", name="Privacy")).to_be_visible()

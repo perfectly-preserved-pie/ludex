@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_PAGE_SIGNALS = ("js.server-rendered", "jsonld.present", "meta.complete")
 REQUIRED_CHECKS = (
     "content.no-js",
+    "trust.anchors",
     "nav.not-found",
     "nav.not-found-markdown",
     "sitemap.valid",

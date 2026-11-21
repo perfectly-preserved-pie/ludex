@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPEDITION_ASSETS = "assets/expedition33"
 PAGE_SOURCES = {
     "/": ("app.py",),
+    "/about": ("app.py", "helpers/seo.py"),
     "/xenosaga": ("games/xenosaga", "assets/xenosaga/xenosaga.db"),
     "/exp33/skilldamage": (
         "games/expedition33/skill_damage.py",

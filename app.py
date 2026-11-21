@@ -12,6 +12,7 @@ from dash import Input, Output, callback, dcc, html, page_registry, register_pag
 from dash_iconify import DashIconify
 from flask import Response, abort, has_request_context, redirect, request
 from helpers.seo import (
+    PROJECT_INFO_PATH,
     PROJECT_SECTIONS,
     PROJECT_URL,
     SITE_DESCRIPTION,
@@ -116,7 +117,7 @@ def build_games_tree() -> list[dict[str, Any]]:
     for page in page_registry.values():
         module: str = page["module"]  # e.g. "pages.expedition33.zonelevels"
         parts = module.split(".")[1:]  # drop leading "pages"
-        if not parts or parts[0] == "home":
+        if not parts or parts[0] in {"home", "about"}:
             continue
 
         game = parts[0]
@@ -308,6 +309,7 @@ Canonical site: https://ludex.games/
 ## Project and corrections
 
 - [Source code and documentation](https://github.com/perfectly-preserved-pie/ludex)
+- [About, contact, and privacy](https://ludex.games/about)
 - Corrections: hey@ludex.games
 """
     return crawler_response(document, "text/plain")
@@ -515,19 +517,10 @@ def home_layout() -> dbc.Container:
             ),
             html.Footer(
                 [
-                    html.Section(
-                        [
-                            html.H2(title, className="h6"),
-                            html.P(
-                                [body, " ", html.A(email[0], href=f"mailto:{email[0]}"), "."]
-                                if email else body
-                            ),
-                        ],
-                        id=slug,
-                    )
-                    for slug, title, body, *email in PROJECT_SECTIONS
+                    dcc.Link(title, href=f"{PROJECT_INFO_PATH}#{slug}", refresh=False)
+                    for slug, title, *_ in PROJECT_SECTIONS
                 ],
-                className="mt-4",
+                className="d-flex gap-3 mt-3 small",
             ),
         ],
         fluid=True,
@@ -535,6 +528,33 @@ def home_layout() -> dbc.Container:
 
 
 register_page("pages.home", path="/", name="Home", title="Ludex | Game Tools & Reference", description=SITE_DESCRIPTION, layout=home_layout)
+
+register_page(
+    "pages.about",
+    path=PROJECT_INFO_PATH,
+    title="Project Information | Ludex",
+    description="About Ludex, how to contact the project, and how site analytics and calculator save imports are handled.",
+    layout=html.Main(
+        [
+            html.H1("Project Information"),
+            *[
+                html.Section(
+                    [
+                        html.H2(title, className="h5"),
+                        html.P(
+                            [body, " ", html.A(email[0], href=f"mailto:{email[0]}"), "."]
+                            if email else body
+                        ),
+                    ],
+                    id=slug,
+                    className="mt-4",
+                )
+                for slug, title, body, *email in PROJECT_SECTIONS
+            ],
+        ],
+        className="container py-4",
+    ),
+)
 
 app.layout = dmc.MantineProvider(
     dbc.Container(

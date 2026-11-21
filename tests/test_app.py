@@ -2,6 +2,7 @@ import gzip
 import json
 import re
 import struct
+from html import escape
 from html.parser import HTMLParser
 from xml.etree import ElementTree
 
@@ -260,3 +261,18 @@ def test_crawler_preferences_and_source_dates(client, monkeypatch):
     }
     assert dates["https://ludex.games/xenosaga"] == "2026-11-20"
     assert dates["https://ludex.games/"] is None
+
+
+def test_home_links_to_crawlable_project_information(client):
+    from helpers.seo import PROJECT_SECTIONS
+
+    home = client.get("/").text
+    about = client.get("/about")
+    assert about.status_code == 200
+    markdown = client.get("/about.md").text
+    for slug, title, body, *_ in PROJECT_SECTIONS:
+        assert f'<a href="/about#{slug}">{title}</a>' in home
+        assert escape(body) not in home
+        assert f'<section id="{slug}"><h2>{title}</h2>' in about.text
+        assert escape(body) in about.text
+        assert f"## {title}\n\n{body}" in markdown
