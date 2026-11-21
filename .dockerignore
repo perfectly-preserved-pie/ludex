@@ -1,6 +1,7 @@
 .git/
 .github/
 .venv/
+node_modules/
 .env
 .env.*
 .python-version

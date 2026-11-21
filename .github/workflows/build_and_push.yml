@@ -36,6 +36,12 @@ jobs:
         with:
           version: '0.13.8'
 
+      - name: Set up Node.js for crawler checks
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+
       - name: Install locked dependencies and Chromium
         run: |
           uv sync --frozen
@@ -43,6 +49,11 @@ jobs:
 
       - name: Run unit and browser tests
         run: uv run --frozen pytest -q --run-browser
+
+      - name: Audit crawler access to the local build
+        run: |
+          npm ci --ignore-scripts
+          uv run --frozen pytest -q --run-geo -m geo
 
       - name: Audit production dependencies
         run: |

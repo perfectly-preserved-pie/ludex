@@ -30,4 +30,7 @@ dev = [
 addopts = "-p no:dash"
 testpaths = ["tests"]
 pythonpath = ["."]
-markers = ["browser: browser integration tests (enable with --run-browser)"]
+markers = [
+    "browser: browser integration tests (enable with --run-browser)",
+    "geo: local crawler regression tests (enable with --run-geo)",
+]

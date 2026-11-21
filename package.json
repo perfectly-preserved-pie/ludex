@@ -1,0 +1,10 @@
+{
+  "name": "ludex-crawler-audit",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@agentmarkup/audit": "0.3.0"
+  }
+}

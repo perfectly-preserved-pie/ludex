@@ -96,3 +96,20 @@ Once registered, the home tree in `app.py` will automatically group the page und
 - The top-level app is intentionally generic so multiple games can live in one project.
 - Game URLs are namespaced by game, for example `/exp33/skilldamage`.
 - Game-specific documentation lives in [Expedition 33 calculator README](games/expedition33/calculator/README.md) and [Xenosaga README](games/xenosaga/readme.md).
+
+## Crawler regression checks
+
+GitHub Actions runs AgentMarkup against the local app on pull requests and
+pushes to `main`. It audits every registered public page, including Xenosaga,
+before the image build. Crawler errors or regressions in the required checks
+fail CI. The aggregate score and advisory warnings are diagnostic.
+
+To run the same checks locally, use Node.js 20 or later and run:
+
+```bash
+npm ci --ignore-scripts
+uv run --frozen pytest -q --run-geo -m geo
+```
+
+Pytest starts the local server. For an on-demand audit of the deployed site,
+run `npx --yes open-geo@0.1.7 audit https://ludex.games/xenosaga`.

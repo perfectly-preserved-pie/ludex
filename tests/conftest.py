@@ -7,14 +7,19 @@ from app import app
 
 def pytest_addoption(parser):
     parser.addoption("--run-browser", action="store_true", help="Run Chromium integration tests")
+    parser.addoption("--run-geo", action="store_true", help="Run the local AgentMarkup crawler audit")
 
 
 def pytest_collection_modifyitems(config, items):
-    if not config.getoption("--run-browser"):
-        skip = pytest.mark.skip(reason="Use --run-browser after installing Playwright Chromium")
-        for item in items:
-            if "browser" in item.keywords:
-                item.add_marker(skip)
+    for marker, option, dependency in (
+        ("browser", "--run-browser", "Playwright Chromium"),
+        ("geo", "--run-geo", "the npm dev dependencies"),
+    ):
+        if not config.getoption(option):
+            skip = pytest.mark.skip(reason=f"Use {option} after installing {dependency}")
+            for item in items:
+                if marker in item.keywords:
+                    item.add_marker(skip)
 
 
 @pytest.fixture(scope="session")
